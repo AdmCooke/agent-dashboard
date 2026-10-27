@@ -1,0 +1,1 @@
+{ "name": "agent-dashboard", "version": "0.1.0", "description": "Live pane showing what the main loop and every subagent is doing", "types": "./types/index.d.ts" }
