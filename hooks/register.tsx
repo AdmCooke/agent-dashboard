@@ -63,8 +63,8 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'agent-dashboard' }, async $ => {
-    await $.ui.open({ id: PANE, title: 'Agents' })
-    return { text: 'Agent dashboard opened.' }
+    const opened = await $.ui.open({ id: PANE, title: 'Agents' })
+    return { text: opened.isPlaced ? 'Agent dashboard opened.' : `Agent dashboard is open but not shown: ${opened.reason}` }
   })
 
   on('tool.call', async ($, e, next) => {
