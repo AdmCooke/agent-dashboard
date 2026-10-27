@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, TurnUsage } from 'claude-code'
 
 import type { Activity } from '../types'
 
@@ -7,7 +7,7 @@ const PANE = 'agent-dashboard'
 const MAIN = 'main'
 // Keyed by agentId ('main' for the main loop); bump the tag if Activity changes.
 const activity = atom({ plugin: 'agent-dashboard', key: 'activity' } as const, {}, {
-  shape: 'activity-2',
+  shape: 'activity-3',
 })
 
 // A short hint of what a tool call touches, from the common input fields.
@@ -18,10 +18,31 @@ const hint = (e: object): string => {
   return s.length > 50 ? s.slice(0, 49) + '…' : s
 }
 
+// List $ per 1M tokens: [input, output, cache read]; cache writes at 1.25x input.
+// shortcut: first-party list prices as of 2026-10-06, ignores fast mode, Haiku 5.5's >100K tier
+// and Bedrock/Vertex pricing; update when prices change. Longer ids first so 'opus-5' can't
+// claim 'opus-5-5'.
+const PRICES: [string, number, number, number?][] = [
+  ['fable-5-1', 10, 50, 0.25], ['mythos-5-1', 10, 50, 0.25], ['fable-5', 10, 50], ['mythos-5', 10, 50],
+  ['opus-5-5', 4, 20, 0.2], ['opus-5', 5, 25], ['opus-4-8', 5, 25], ['opus-4-7', 5, 25], ['opus-4-6', 5, 25],
+  ['sonnet-5-5', 2, 10, 0.2], ['sonnet-5', 2, 10], ['sonnet-4-6', 3, 15],
+  ['haiku-5-5', 0.1, 0.5], ['haiku-4-5', 1, 5],
+]
+
+const cost = (u: TurnUsage): number | undefined => {
+  const p = PRICES.find(([id]) => u.model.includes(id))
+  if (!p) return undefined
+  const [, inp, out, read = inp / 10] = p
+  return (u.input_tokens * inp + u.output_tokens * out + u.cache_read_input_tokens * read
+    + u.cache_creation_input_tokens * inp * 1.25) / 1e6
+}
+
+const usd = (n: number) => `$${n < 1 ? n.toFixed(3) : n.toFixed(2)}`
+
 const k = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`)
 
 // Input counts cached reads and writes too: that is what the model was sent.
-const tokens = (a: Activity) => `${k(a.tokensIn)} in / ${k(a.tokensOut)} out tokens`
+const tokens = (a: Activity) => `${k(a.tokensIn)} in / ${k(a.tokensOut)} out tokens · ${usd(a.usd)}${a.isUnpriced ? ' + unpriced' : ''}`
 
 const ago = (ms: number) => {
   const s = Math.max(0, Math.round(ms / 1000))
@@ -31,7 +52,7 @@ const ago = (ms: number) => {
 const set = ($: EngineInterface, key: string, fn: (a: Activity) => Activity) =>
   update($, activity, all => ({
     ...all,
-    [key]: fn(all[key] ?? { last: '', calls: 0, isRunning: false, at: 0, tokensIn: 0, tokensOut: 0 }),
+    [key]: fn(all[key] ?? { last: '', calls: 0, isRunning: false, at: 0, tokensIn: 0, tokensOut: 0, usd: 0, isUnpriced: false }),
   }))
 
 export const register: Register = on => {
@@ -60,8 +81,11 @@ export const register: Register = on => {
     const res = yield* next(e)
     const u = res.usage
     if (u) {
+      const spent = cost(u)
       await set($, e.agentId ?? MAIN, a => ({
         ...a,
+        usd: a.usd + (spent ?? 0),
+        isUnpriced: a.isUnpriced || spent === undefined,
         tokensIn: a.tokensIn + u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens,
         tokensOut: a.tokensOut + u.output_tokens,
       }))

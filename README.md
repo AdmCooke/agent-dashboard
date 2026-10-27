@@ -1,6 +1,6 @@
 # agent-dashboard
 
-A Claude Code mod that adds a live **Agents** pane beside the chat. It shows what the main conversation and every subagent is doing right now: each agent's status (running, completed, failed), its latest tool call with a short hint such as the command or file, how many tool calls it has made, how many tokens its model requests have used (input including cache, and output), and how long ago it last acted. Click an agent to open its transcript. The pane opens when a session starts; reopen it with `/agent-dashboard`.
+A Claude Code mod that adds a live **Agents** pane beside the chat. It shows what the main conversation and every subagent is doing right now: each agent's status (running, completed, failed), its latest tool call with a short hint such as the command or file, how many tool calls it has made, how many tokens its model requests have used (input including cache, and output), an estimated cost in dollars at Anthropic's list prices (as of 2026-10-06; cards say "+ unpriced" for models it doesn't know), and how long ago it last acted. Click an agent to open its transcript. The pane opens when a session starts; reopen it with `/agent-dashboard`.
 
 ## Install
 

@@ -41,7 +41,7 @@ test('each card shows the tokens its model requests used', async ($, on) => {
     return {
       turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn',
       usage: {
-        model: 'm', input_tokens: 1000, output_tokens: 250,
+        model: 'claude-opus-5-5', input_tokens: 1000, output_tokens: 250,
         cache_read_input_tokens: 500, cache_creation_input_tokens: 0,
       },
     }
@@ -54,6 +54,6 @@ test('each card shows the tokens its model requests used', async ($, on) => {
   }
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect((await ui.find({ type: 'Text', text: /tokens/ }))?.text).toBe('3.0k in / 500 out tokens')
+  expect((await ui.find({ type: 'Text', text: /tokens/ }))?.text).toBe('3.0k in / 500 out tokens · $0.018')
   await ui.unmount()
 })
