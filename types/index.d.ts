@@ -1,4 +1,4 @@
-export type Activity = { last: string; calls: number; isRunning: boolean; at: number }
+export type Activity = { last: string; calls: number; isRunning: boolean; at: number; tokensIn: number; tokensOut: number }
 
 declare module 'claude-code' {
   interface PluginState {

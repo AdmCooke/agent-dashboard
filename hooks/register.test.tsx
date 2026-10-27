@@ -31,3 +31,29 @@ test('shows main and subagent activity on every surface', async ($, on) => {
     await ui.unmount()
   }
 })
+
+test('each card shows the tokens its model requests used', async ($, on) => {
+  on('agent.list', () => ({
+    value: [{ id: 'a1', description: 'Find auth code', type: 'Explore', status: 'running' }],
+  }))
+  on('tool.call', () => ({ result: {} }))
+  on('turn.step', async function* (_, e) {
+    return {
+      turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn',
+      usage: {
+        model: 'm', input_tokens: 1000, output_tokens: 250,
+        cache_read_input_tokens: 500, cache_creation_input_tokens: 0,
+      },
+    }
+  })
+
+  await $.tool.call({ tool: 'Grep', pattern: 'login', agentId: 'a1' })
+  for (const index of [0, 1]) {
+    const stream = $.turn.step({ turnId: 't', index, model: 'm', messageCount: 1, agentId: 'a1' })
+    for await (const _ of stream);
+  }
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect((await ui.find({ type: 'Text', text: /tokens/ }))?.text).toBe('3.0k in / 500 out tokens')
+  await ui.unmount()
+})
