@@ -16,6 +16,9 @@ When unsure, list the lead under "check by hand" instead of guessing.
 Same email or same phone = same person. Keep the newest record that has the
 most fields filled in. Propose the others as Junk Lead with reason "duplicate of <id>".
 
+## Closed statuses
+Lost Lead, Junk Lead and "Not Inerested" (spelled that way in Zoho) are closed. Never list or draft to them.
+
 ## Lost
 Any reply saying no thanks, not interested, already went with someone, or stop
 → Lost Lead, with the reason quoted from the reply.

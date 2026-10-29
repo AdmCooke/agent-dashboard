@@ -19,6 +19,10 @@ allowed-tools: Read
 
 Zoho says what stage a lead is in; Gmail says what actually happened. They often disagree, and Gmail wins. Every run checks both before ranking or drafting anything.
 
+## Step 0 — Check Adam's other sales tasks
+
+Read `reference/scheduled-tasks.md`. Five scheduled tasks already handle call lists, the call dashboard, Facebook leads, the Wednesday stale-lead drafts, and reply watches. Pull their latest results first, so this run adds to their work and never repeats it.
+
 ## Step 1 — Pull open leads from Zoho
 
 COQL on `Leads`, status in `New`, `Attempted`, `Attempted to Contact`, `Contacted`, plus any lead created in the last 14 days with no status. Fields: name, Email, Phone, Mobile, Lead_Status, Temp, Product, Follow_up, City, Avg_monthly_electric_bill, Utility_Company, ub_uploaded, Description, Created_Time, Modified_Time.
@@ -49,7 +53,7 @@ Order:
 4. Roof, or Removal and Reinstall, with real details
 5. Attempted 3 or more times and quiet for over 30 days: one last-try email, no call
 
-Respect `Follow_up`: if it is in the future, skip the lead unless it fell due today. Show the top 5 to 10, each with phone, town, product, the one-line reason it ranks there, and the talking point from the email history.
+Respect `Follow_up`: if it is in the future, skip the lead unless it fell due today. Skip anyone already in today's tables in the Website Lead Call List, and anyone another task is handling (Step 0). Show the top 5 to 10, each with phone, town, product, the one-line reason it ranks there, and the talking point from the email history.
 
 ## Step 5 — Find new leads in past customers
 
@@ -67,7 +71,9 @@ Show every proposed Zoho change in a single table: record, field, old value, new
 
 ## Output
 
-1. Call list (Step 4)
+The call list goes into the Website Lead Call List doc as a `### Sales agent picks` table under today's `## Today's Calls` heading. Use the same columns as the other tables there: Name (linked to Zoho) | Town | Phone | Email | Stage | The job | Zoho Notes | Result. Leave Result blank. Add only that table and change nothing else in the doc. If today's heading isn't there yet, report the list in chat instead.
+
+1. Call list (Step 4), plus "From Facebook groups" and "Handled by another task"
 2. Drafts created, with links
 3. Proposed Zoho changes (Step 7)
 4. "Needs a name" count, and anything missing, by name
@@ -85,3 +91,4 @@ Missing data is reported as missing. Never invent a bill amount, savings figure,
 
 - `reference/voice.md` — Adam's voice profile, built from his sent mail
 - `reference/rules.md` — service area, junk signals, installed-base rule
+- `reference/scheduled-tasks.md` — Adam's other sales tasks and how this agent works around them

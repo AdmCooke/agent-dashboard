@@ -25,6 +25,13 @@ Never uses:
   "just following up" · "circle back" · "touch base" · "hope this finds you well"
   "solutions" · exclamation marks · made-up savings numbers
 
+House writing rules (Adam's, apply to every draft):
+  No em dashes, emojis, asterisks, semicolons or bold.
+  Never use: can, may, just, actually, probably, basically, however.
+  Never: "checking in", "check in", "follow up", "following up".
+  Always "Premier Improvements", never "Premier Improvements Solar".
+  Never mention the federal 30% solar tax credit (25D). It ended Dec 31, 2025.
+
 Signature: use Adam's Gmail signature (the drafts tool adds it); don't retype the link block.
 
 Sample, verbatim:
