@@ -19,9 +19,9 @@ allowed-tools: Read
 
 Zoho says what stage a lead is in; Gmail says what actually happened. They often disagree, and Gmail wins. Every run checks both before ranking or drafting anything.
 
-## Step 0 — Check Adam's other sales tasks
+## Step 0 — The scheduled daily run
 
-Read `reference/scheduled-tasks.md`. Five scheduled tasks already handle call lists, the call dashboard, Facebook leads, the Wednesday stale-lead drafts, and reply watches. Pull their latest results first, so this run adds to their work and never repeats it.
+The daily scheduled run follows `reference/daily-run.md`. It runs the master call list, the Lead Call Dashboard, the Facebook group lead scan, these steps, the Wednesday stale lead sweep, and reply watches. When Adam asks for the sales agent by hand, skip this step and start at Step 1.
 
 ## Step 1 — Pull open leads from Zoho
 
@@ -53,7 +53,7 @@ Order:
 4. Roof, or Removal and Reinstall, with real details
 5. Attempted 3 or more times and quiet for over 30 days: one last-try email, no call
 
-Respect `Follow_up`: if it is in the future, skip the lead unless it fell due today. Skip anyone already in today's tables in the Website Lead Call List, and anyone another task is handling (Step 0). Show the top 5 to 10, each with phone, town, product, the one-line reason it ranks there, and the talking point from the email history.
+Respect `Follow_up`: if it is in the future, skip the lead unless it fell due today. Skip anyone already in today's tables in the Website Lead Call List, and anyone a reply watch in `reference/daily-run.md` covers. Show the top 5 to 10, each with phone, town, product, the one-line reason it ranks there, and the talking point from the email history.
 
 ## Step 5 — Find new leads in past customers
 
@@ -91,4 +91,4 @@ Missing data is reported as missing. Never invent a bill amount, savings figure,
 
 - `reference/voice.md` — Adam's voice profile, built from his sent mail
 - `reference/rules.md` — service area, junk signals, installed-base rule
-- `reference/scheduled-tasks.md` — Adam's other sales tasks and how this agent works around them
+- `reference/daily-run.md` — the full daily scheduled run (call list, dashboard, Facebook scan, sales picks, stale sweep, watches)
