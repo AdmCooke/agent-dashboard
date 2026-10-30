@@ -1,6 +1,6 @@
 # Agent playbook
 
-Every agent in this repo reads this file: the main conversation, each subagent, and the Chief of Staff. The Chief of Staff curates it after each review. Keep it short, because every agent pays for it in context.
+The main conversation and general-purpose subagents load this file through `CLAUDE.md`. Built-in Explore subagents do not. The Chief of Staff curates it after each review. Keep it short, because every agent pays for it in context.
 
 ## Standing rules
 
@@ -15,6 +15,8 @@ Every agent in this repo reads this file: the main conversation, each subagent, 
 4. Did I hit an error, retry loop or surprise that the next agent should know about? If so, add one dated line under `## Lessons`.
 
 ## Lessons
+
+- 2026-10-30 (main): Explore subagents don't load `CLAUDE.md` → when a task needs these rules, delegate it to a general-purpose agent, or paste the rule into the prompt.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
