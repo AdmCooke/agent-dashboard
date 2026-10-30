@@ -7,7 +7,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - Never report something as done or passing unless you saw the evidence in this run. Say what you did not check.
 - Stay inside the task you were given. Name extra ideas in one line rather than building them.
 - When the user asks you to merge a pull request, merge it. Their request is enough; don't wait for checks or a review first.
-- Force-push only to branches you created yourself, never to anyone else's branch or to `main`.
+- Force-push only to branches you created yourself, with `--force-with-lease` (`.claude/settings.json` denies plain `--force` and `-f`), never to anyone else's branch or to `main`.
 
 ## Before you finish, ask yourself
 
@@ -18,7 +18,9 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 ## Lessons
 
-- 2026-10-30 (main): Turning off 10 unused plugins cut a fresh session's starting context only from 46.4k to 42.4k tokens, because connector tools load on demand → measure before you promise savings from config changes.
+- 2026-10-30 (main): Turning off 10 unused plugins cut a fresh session's starting context only from 46.4k to 42.4k tokens. Connector tool schemas load on demand, but a cloud session still loads the connectors' tool names (~50k chars) and MCP instructions (~30k chars) at start, and repo settings can't turn those off → measure before you promise savings from config changes.
+- 2026-10-30 (main): The force-push deny rules match only when the flag comes before the refspec: `git push <remote> HEAD:main --force-with-lease` was not denied (tested on a scratch repo) → treat deny patterns as a speed bump; GitHub branch protection is what actually guards `main`.
+- 2026-10-30 (main): Changing a file under `agents/`, `commands/` or `hooks/` without bumping `version` in `.claude-plugin/plugin.json` keeps installed users on the old copy → bump the version in the same PR.
 - 2026-10-30 (main): Explore subagents don't load `CLAUDE.md` → when a task needs these rules, delegate it to a general-purpose agent, or paste the rule into the prompt.
 - 2026-10-30 (chief-of-staff): A launch prompt said "no other subagents have run yet", but the session already had 3 finished subagents and 2 merged PRs → describe session state only from what you listed yourself (e.g. `ls <session>/subagents`), not from memory.
 - 2026-10-30 (chief-of-staff): The GitHub merge tool rejects a short `expectedHeadSha` → pass the full 40-char `git rev-parse HEAD`.
