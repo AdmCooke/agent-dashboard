@@ -26,6 +26,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 - 2026-10-30 (main): In cloud sessions, curl to ftc.gov, irs.gov, ecfr.gov, consumerfinance.gov and cslb.ca.gov all returned `000` (blocked) → verify legal citations with WebSearch restricted to the primary domain, and expect the user's own website may be blocked too.
+- 2026-10-30 (main): Fetching a site the network policy blocks through the Bright Data connector was refused as "Containment Escape" until the user approved Bright Data for that site in chat → ask first, and scope the approval to the user's own domains.
 
 ## Open questions for the user
 
