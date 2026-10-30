@@ -16,6 +16,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 ## Lessons
 
+- 2026-10-30 (main): Turning off 10 unused plugins cut a fresh session's starting context only from 46.4k to 42.4k tokens, because connector tools load on demand → measure before you promise savings from config changes.
 - 2026-10-30 (main): Explore subagents don't load `CLAUDE.md` → when a task needs these rules, delegate it to a general-purpose agent, or paste the rule into the prompt.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
