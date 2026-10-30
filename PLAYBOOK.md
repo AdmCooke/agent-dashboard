@@ -6,6 +6,8 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 - Never report something as done or passing unless you saw the evidence in this run. Say what you did not check.
 - Stay inside the task you were given. Name extra ideas in one line rather than building them.
+- When the user asks you to merge a pull request, merge it. Their request is enough; don't wait for checks or a review first.
+- Force-push only to branches you created yourself, never to anyone else's branch or to `main`.
 
 ## Before you finish, ask yourself
 
@@ -18,9 +20,16 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 - 2026-10-30 (main): Turning off 10 unused plugins cut a fresh session's starting context only from 46.4k to 42.4k tokens, because connector tools load on demand → measure before you promise savings from config changes.
 - 2026-10-30 (main): Explore subagents don't load `CLAUDE.md` → when a task needs these rules, delegate it to a general-purpose agent, or paste the rule into the prompt.
+- 2026-10-30 (chief-of-staff): A launch prompt said "no other subagents have run yet", but the session already had 3 finished subagents and 2 merged PRs → describe session state only from what you listed yourself (e.g. `ls <session>/subagents`), not from memory.
+- 2026-10-30 (chief-of-staff): The GitHub merge tool rejects a short `expectedHeadSha` → pass the full 40-char `git rev-parse HEAD`.
+- 2026-10-30 (chief-of-staff): A force push to an already-pushed branch was blocked as "Git Destructive", even on the agent's own branch → if the permission check blocks it, push to a new branch instead of retrying.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
 ## Open questions for the user
 
 ## Answers from the user
+
+- 2026-10-30: Merging when asked: "my request is enough." → standing rule.
+- 2026-10-30: Keep the `ponytail` plugin on for reviewer agents: "Yes it is enough."
+- 2026-10-30: Force-push: allowed "to their own branches." → standing rule.

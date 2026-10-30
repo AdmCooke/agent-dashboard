@@ -50,7 +50,7 @@ Keep the report short:
 
 ## 5. Improve yourself (every run, no exceptions)
 
-Before you finish, update `PLAYBOOK.md`:
+Before you finish, update `PLAYBOOK.md`. If the edit is denied, don't retry: put the exact lines in your report under **Playbook changes I could not save**.
 - Under `## Lessons`, add a dated line for each new pattern: a failure mode you caught, or a check that proved useful. Read the lessons other agents added there, and check them like any other claim.
 - When a lesson has now come up three times, promote it to `## Standing rules`. When a check keeps catching mistakes, add it to `## Before you finish, ask yourself`, so every agent runs it on itself.
 - Delete lessons that turned out wrong or redundant, and merge duplicates. Keep the file under about 80 lines, because every agent loads it.
