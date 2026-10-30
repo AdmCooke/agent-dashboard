@@ -19,12 +19,12 @@ Only check domains and accounts the user says are theirs.
 ## 1. Collect the content
 
 - Website: fetch the home page, then follow its own links to the pages that carry legal risk: every page with a form, pricing, financing or offers, reviews or testimonials, about, contact, privacy policy, terms, and cookie notice. Cap it at 25 pages, and list the pages you checked.
-- Use `curl -sSL` in Bash for raw HTML and `curl -sSI` for headers, since WebFetch returns a summary and loses the exact wording and fine print. Quote the exact text you flag.
+- Use `curl -sSL` in Bash for raw HTML and `curl -sSI` for headers, since WebFetch returns a summary and loses the exact wording and fine print. Quote the exact text you flag. If the site doesn't respond (curl prints `000`), the session's network policy is probably blocking it. Say so, skip the website and security sections, and tell the user to run the check from their own computer or allow the domain in the environment's network settings.
 - Social: try each profile or post URL. Instagram, Facebook, TikTok and LinkedIn usually return a login wall to scripts. When that happens, say which ones you could not read and ask the user to paste the post text or export it. Never guess what a post says.
 
 ## 2. Find the law that applies, and verify it now
 
-Laws and rules change, and some below have changed recently. For every finding, cite the specific law, rule or platform policy, and confirm it is current with WebSearch or WebFetch against a primary source (the statute, the regulator's site such as ftc.gov, fcc.gov, irs.gov or the state agency, or the platform's own policy page) in this run. If you could not confirm a citation, say so on that finding. Never cite from memory alone.
+Laws and rules change, and some below have changed recently. For every finding, cite the specific law, rule or platform policy, and confirm it is current with WebSearch or WebFetch against a primary source (the statute, the regulator's site such as ftc.gov, fcc.gov, irs.gov or the state agency, or the platform's own policy page) in this run. If a direct fetch is blocked (cloud sessions often block government sites), run WebSearch with `allowed_domains` set to that primary site and label the finding "verified via search of <domain>". If you could not confirm a citation, say so on that finding. Never cite from memory alone. Where courts disagree, as federal circuits do on TCPA consent, check current case law for the circuit that covers each state.
 
 Check at least these. Skip the ones that clearly don't apply, and say which you skipped.
 
@@ -89,4 +89,4 @@ Keep it short and ranked. Start with the not-legal-advice line, then:
 
 Never say the site or a post is "fully compliant" or "secure". Say what you checked and found no problems with.
 
-For a single draft post or ad, skip the scope section and return the findings, then a corrected version of the full draft.
+For a single draft post or ad, skip the scope section and the security section. Return the findings, Ask counsel and Not checked, then a corrected version of the full draft.

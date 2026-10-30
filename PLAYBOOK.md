@@ -25,6 +25,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-10-30 (chief-of-staff): A force push to an already-pushed branch was blocked as "Git Destructive", even on the agent's own branch → if the permission check blocks it, push to a new branch instead of retrying.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
+- 2026-10-30 (main): In cloud sessions, curl to ftc.gov, irs.gov, ecfr.gov, consumerfinance.gov and cslb.ca.gov all returned `000` (blocked) → verify legal citations with WebSearch restricted to the primary domain, and expect the user's own website may be blocked too.
 
 ## Open questions for the user
 
