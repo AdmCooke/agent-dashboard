@@ -10,6 +10,12 @@ It improves with use, and so does every other agent. The shared playbook is `PLA
 
 After each review the Chief of Staff curates the playbook. It checks lessons other agents added, promotes recurring ones to rules for everyone, and adds checks that keep catching mistakes to the self-check list. It also proposes changes to its own instructions for you to approve, and ends with questions for you. Your answers become rules for all agents. Commit `PLAYBOOK.md` to keep what the agents learned. The Chief of Staff never commits it for you.
 
+## Compliance Officer
+
+Run `/compliance` with your website URL, social profile URLs, the states you operate in, or the text of a draft post or ad. The `compliance-officer` subagent checks the content against US federal law (FTC advertising, endorsement and review rules, the Green Guides, financing-ad disclosures, TCPA, CAN-SPAM, ADA accessibility), the laws of each state you operate in (privacy, telemarketing, contractor licensing, industry and door-to-door sales rules), and each platform's ad and promotion rules. It confirms every citation against a primary source during the run. It also runs a passive security check of the website: HTTPS, security headers, cookies, exposed files, outdated software, and the email records that stop spoofing.
+
+It returns findings ranked High, Medium or Low, each with the exact text it flagged, the law it breaks, and a fix you can paste. For a single draft post it returns a corrected version. It is read-only: it never edits your site or posts, and it never claims something is fully compliant. It isn't legal advice, and it lists questions to take to an attorney. Social networks usually block scripts, so you may need to paste post text in.
+
 ## Install
 
 At the prompt of a terminal session:

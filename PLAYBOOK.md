@@ -25,6 +25,9 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-10-30 (chief-of-staff): A force push to an already-pushed branch was blocked as "Git Destructive", even on the agent's own branch → if the permission check blocks it, push to a new branch instead of retrying.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
+- 2026-10-30 (main): In cloud sessions, curl to ftc.gov, irs.gov, ecfr.gov, consumerfinance.gov and cslb.ca.gov all returned `000` (blocked) → verify legal citations with WebSearch restricted to the primary domain, and expect the user's own website may be blocked too.
+- 2026-10-30 (main): Fetching a site the network policy blocks through the Bright Data connector was refused as "Containment Escape" until the user approved Bright Data for that site in chat → ask first, and scope the approval to the user's own domains.
+- 2026-10-30 (main): Elementor page text lives in the `_elementor_data` post meta (150–400 KB of JSON per page), so rewriting it through the WordPress connector is impractical. A one-time plugin that does exact replacements server-side works, but the connector's `plugin.upload` to a Jetpack site returned 403 (likely the site firewall) → hand the user the zip to upload in wp-admin instead of retrying.
 
 ## Open questions for the user
 

@@ -1,1 +1,1 @@
-{ "name": "agent-dashboard", "version": "0.4.0", "description": "Live pane showing what the main loop and every subagent is doing, plus a Chief of Staff agent that verifies their work", "types": "./types/index.d.ts" }
+{ "name": "agent-dashboard", "version": "0.5.0", "description": "Live pane showing what the main loop and every subagent is doing, a Chief of Staff agent that verifies their work, and a Compliance Officer agent that audits the company website and socials", "types": "./types/index.d.ts" }
