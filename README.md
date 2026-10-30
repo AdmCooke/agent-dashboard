@@ -6,7 +6,9 @@ A Claude Code mod that adds a live **Agents** pane beside the chat. It shows wha
 
 Run `/chief-of-staff` (optionally with a focus, or your answers to its last questions) to launch the `chief-of-staff` subagent. It reads every agent's transcript in the session, checks each claim against the repo itself (diffs, files, test runs), and marks each claim VERIFIED, UNVERIFIED or WRONG. It flags waste and risk, and gives each agent a verdict. It never changes other agents' work.
 
-It improves with use. It keeps a playbook at `~/.claude/chief-of-staff/playbook.md`, which it reads first on each run. After each review it adds lessons, promotes a lesson that recurs into a standing rule, proposes changes to its own instructions for you to approve, and ends with questions for you. Your answers become rules for later runs. The playbook is local to the machine, so in a cloud session it lasts only as long as the container.
+It improves with use, and so does every other agent. The shared playbook is `PLAYBOOK.md` at the root of the project repo. The repo's `CLAUDE.md` imports it with `@PLAYBOOK.md`, so the main conversation and every subagent load it. In a project that doesn't import it yet, the Chief of Staff creates the file and adds the import line. The playbook holds standing rules, a short self-check every agent runs before finishing, and dated lessons that any agent can add.
+
+After each review the Chief of Staff curates the playbook. It checks lessons other agents added, promotes recurring ones to rules for everyone, and adds checks that keep catching mistakes to the self-check list. It also proposes changes to its own instructions for you to approve, and ends with questions for you. Your answers become rules for all agents. Commit `PLAYBOOK.md` to keep what the agents learned. The Chief of Staff never commits it for you.
 
 ## Install
 

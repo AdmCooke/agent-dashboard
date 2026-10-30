@@ -1,0 +1,23 @@
+# Agent playbook
+
+Every agent in this repo reads this file: the main conversation, each subagent, and the Chief of Staff. The Chief of Staff curates it after each review. Keep it short, because every agent pays for it in context.
+
+## Standing rules
+
+- Never report something as done or passing unless you saw the evidence in this run. Say what you did not check.
+- Stay inside the task you were given. Name extra ideas in one line rather than building them.
+
+## Before you finish, ask yourself
+
+1. Did I check each claim in my answer myself, or am I repeating what I assume?
+2. Did I do what was asked: all of it, and nothing more?
+3. What would the user ask next, and have I already answered it?
+4. Did I hit an error, retry loop or surprise that the next agent should know about? If so, add one dated line under `## Lessons`.
+
+## Lessons
+
+<!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
+
+## Open questions for the user
+
+## Answers from the user
