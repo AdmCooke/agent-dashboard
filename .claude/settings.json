@@ -9,7 +9,8 @@
     "searchfit-seo@synced": false,
     "productivity@synced": false,
     "cowork-plugin-management@synced": false,
-    "browser-use@synced": false
+    "browser-use@synced": false,
+    "hostinger@claude-plugins-official": true
   },
   "permissions": {
     "deny": [
@@ -20,5 +21,13 @@
       "Bash(git push --force-with-lease* HEAD:main*)",
       "Bash(git push --force-with-lease* *:main)"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
   }
 }
