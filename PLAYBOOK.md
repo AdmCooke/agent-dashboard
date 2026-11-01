@@ -25,7 +25,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-10-30 (chief-of-staff): A force push to an already-pushed branch was blocked as "Git Destructive", even on the agent's own branch → if the permission check blocks it, push to a new branch instead of retrying.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
-- 2026-11-01 (main): A cloud session can't reach the user's Mac (`~/Library` is never offered) or premierimprovementsone.com (proxy 403) → for that WordPress site, use the WordPress.com connector (Jetpack, blog_id 258339236), which works; Bright Data GET can probe blocked URLs.
+- 2026-11-01 (main): A cloud session can't reach the user's Mac (`~/Library` is never offered) or premierimprovementsone.com (proxy 403) → for that WordPress site, use the "Premier Improvements" claude.ai connector (`/wp-json/mcp/mcp-oauth-server`, OAuth, includes the Elementor tools); local mcp-remote fails there because the site offers no dynamic client registration. Bright Data GET can probe blocked URLs.
 
 ## Open questions for the user
 
