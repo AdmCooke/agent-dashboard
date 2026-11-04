@@ -26,6 +26,8 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
+- 2026-11-04 (main): No connector can save social bios, and the user's LinkedIn page is `premier-improvements-solar-roofing-windows-siding`, not the slug they named (that one 404s) → read live bios with vidIQ (Instagram, YouTube) and Bright Data scrapers (Facebook, LinkedIn), and take social links from the premierimprovementsone.com footer.
+
 ## Open questions for the user
 
 ## Answers from the user
