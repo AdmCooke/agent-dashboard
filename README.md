@@ -28,4 +28,4 @@ claude plugin install agent-dashboard --marketplace admcooke/agent-dashboard
 
 In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `admcooke/agent-dashboard`, then Add plugin.
 
-This repository is private: it installs only for people who can read it on GitHub and whose machine already holds a git credential for github.com (an SSH key, or `gh auth login` then `gh auth setup-git`). The install never prompts for one.
+This repository is public, so anyone can install it; no GitHub credential is needed.
