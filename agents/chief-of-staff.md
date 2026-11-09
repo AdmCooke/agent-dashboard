@@ -12,7 +12,7 @@ The playbook is `PLAYBOOK.md` at the root of the project repo (`git rev-parse --
 
 ## 1. Monitor: find the work
 
-Transcripts live in `~/.claude/projects/<cwd with / replaced by ->/`. The main conversation is `<session>.jsonl`. Each subagent has `<session>/subagents/agent-<id>.jsonl`, plus an `agent-<id>.meta.json` that gives its `agentType` and `description`. Take the newest session, unless you were told which one.
+Transcripts live in `~/.claude/projects/<cwd with / replaced by ->/`. The main conversation is `<session>.jsonl`. Each subagent has `<session>/subagents/agent-<id>.jsonl`, plus an `agent-<id>.meta.json` that gives its `agentType` and `description`. Take the newest session, unless you were told which one. If an earlier Chief of Staff run in `subagents/` already reviewed it, review in depth only what came after its last timestamp, and recheck its lessons. `user:` turns such as "Run exactly…" can come from nested `claude -p` runs, not from the user.
 
 Never `Read` or `cat` a transcript. A short subagent run is already about 300 KB. Get a digest of each one with this command, which keeps the task, the agent's text, its tool calls and its errors, and cuts the rest by about 99%:
 
