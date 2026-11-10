@@ -33,6 +33,8 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 - 2026-11-10 (main): `claude-plugins-official` isn't preconfigured in cloud containers, and a plugin install there is user scope (temporary) → add the marketplace with `claude plugin marketplace add anthropics/claude-plugins-official`, then save it in `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`). Remote MCP plugins also need their host allowed (Hostinger's `mcp.hostinger.com` got a proxy 403).
 
+- 2026-11-10 (main): Hostinger's MCP server (`mcp.hostinger.com`) rejected two fresh hPanel API tokens saved as network secrets (401). Its OAuth metadata lists only `auth.hostinger.com` tokens with scope `mcp:use` → the Hostinger plugin needs browser sign-in, so use it from local Claude Code, not cloud sessions.
+
 ## Open questions for the user
 
 ## Answers from the user
