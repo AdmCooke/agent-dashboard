@@ -30,6 +30,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-09 (chief-of-staff): A nested `claude -p` run writes into the parent session's transcript as `user:` turns ("Run exactly…", "Reply with exactly: OK") → reviewers: don't mistake those for the user's requests.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
+- 2026-11-10 (main): `claude-plugins-official` wasn't a known marketplace in a fresh container, and the cloud proxy blocked `mcp.hostinger.com` (403) after the Hostinger plugin installed → a plugin install isn't "working" until its MCP host passes a `curl` through the proxy.
 
 ## Open questions for the user
 

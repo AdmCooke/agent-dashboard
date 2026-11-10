@@ -9,7 +9,16 @@
     "searchfit-seo@synced": false,
     "productivity@synced": false,
     "cowork-plugin-management@synced": false,
-    "browser-use@synced": false
+    "browser-use@synced": false,
+    "hostinger@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
   },
   "permissions": {
     "deny": [
