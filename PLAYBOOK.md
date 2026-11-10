@@ -28,11 +28,10 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-09 (chief-of-staff): The allow rule `Bash(git push --force-with-lease *)` didn't check whose branch it was, and `origin` has branches from other sessions (`claude/*`, `premier-sales-agent`) → narrowed to `agent/` branches; before force-pushing, still confirm you created that branch in this session.
 - 2026-11-09 (chief-of-staff): Main told the user "the repo is private" without checking. `gh api repos/AdmCooke/agent-dashboard` says public → `gh` REST reads work here (GraphQL returns 403), so check before advising.
 - 2026-11-09 (chief-of-staff): A nested `claude -p` run writes into the parent session's transcript as `user:` turns ("Run exactly…", "Reply with exactly: OK") → reviewers: don't mistake those for the user's requests.
+- 2026-11-10 (main): `claude-plugins-official` isn't preconfigured in cloud containers, and a plugin install there is user scope (temporary) → add the marketplace with `claude plugin marketplace add anthropics/claude-plugins-official`, then save it in `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`). Remote MCP plugins also need their host allowed (Hostinger's `mcp.hostinger.com` got a proxy 403).
+- 2026-11-10 (main): Hostinger's MCP still fails after install: `mcp.hostinger.com` now passes the proxy, but it rejects the saved "Hostinger API token" (`X-Proxy-Error: upstream auth failed`) and asks for OAuth via `auth.hostinger.com`, which the proxy blocks → check `claude mcp list` and the response headers before calling a plugin working. Two fresh hPanel tokens both failed, so use the Hostinger plugin from local Claude Code, where browser sign-in works.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
-
-- 2026-11-10 (main): `claude-plugins-official` isn't preconfigured in cloud containers, and a plugin install there is user scope (temporary) → add the marketplace with `claude plugin marketplace add anthropics/claude-plugins-official`, then save it in `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`). Remote MCP plugins also need their host allowed (Hostinger's `mcp.hostinger.com` got a proxy 403).
-- 2026-11-10 (main): Hostinger's MCP still fails after install: `mcp.hostinger.com` now passes the proxy, but it rejects the saved "Hostinger API token" (`X-Proxy-Error: upstream auth failed`) and asks for OAuth via `auth.hostinger.com`, which the proxy blocks → check `claude mcp list` and the response headers before calling a plugin working.
 
 ## Open questions for the user
 
