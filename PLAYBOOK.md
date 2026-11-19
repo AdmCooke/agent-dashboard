@@ -37,6 +37,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-19 (main): The cloud container's proxy carries HTTPS only: plain http:// curls return 405 and non-allowlisted hosts fail DNS, and WebFetch fails the same way → add hosts with update_environment for HTTPS, and get http:// redirect proof from the user's own terminal or an outside fetch (Bright Data scrape_as_markdown reaches any host).
 - 2026-11-19 (main): No Claude-in-Chrome tools exist in a cloud session, and the user's Remote Control folder was listed as not_available → WP Admin, Elementor and Cloudflare changes need a desktop session with the Chrome extension; from the cloud, deliver drafts and exact change lists instead.
 - 2026-11-19 (main): The brand-check lint flags "#HIC" in the required license line "CT Lic. #HIC.0659657" as an uppercase hashtag → treat that one hit as a false positive, the license rule wins.
+- 2026-11-19 (main): Remote branches can't be deleted from a cloud session: `git push origin --delete <branch>` gets a 403 from the git proxy, `gh api -X DELETE .../git/refs/heads/<branch>` is refused as a write path, and the GitHub MCP has no delete-branch tool → hand the user the `git push origin --delete` commands to run locally, or point them to the branch list on github.com.
 
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
