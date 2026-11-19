@@ -9,6 +9,8 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - When the user asks you to merge a pull request, merge it. Their request is enough; don't wait for checks or a review first.
 - Name branches you create `agent/<topic>`. Force-push (`--force-with-lease`, never `--force`) only to an `agent/` branch you created in this session, never to anyone else's branch or to `main`.
 - The repo is public: treat every commit, branch name and PR text as public. Never put secrets, credentials, email addresses or private notes in them.
+- Before editing, `git fetch` and start a new `agent/` branch from `origin/main`, even when the checkout is on another branch.
+- After your pull request merges, delete your own branch where you can. Where you can't (cloud sessions), list it for the user with the command to delete it.
 - A change is "done" only once it's in the repo (merged) or on claude.ai. A change that lives only in this cloud container (user settings, a local plugin install) is "temporary": say so, and say how to make it permanent.
 
 ## Before you finish, ask yourself
@@ -27,7 +29,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-10-30 (chief-of-staff): The GitHub merge tool rejects a short `expectedHeadSha` → pass the full 40-char `git rev-parse HEAD`.
 - 2026-10-30 (chief-of-staff): A force push to an already-pushed branch was blocked as "Git Destructive", even on the agent's own branch → if the permission check blocks it, push to a new branch instead of retrying. (The user-level allow rule for `--force-with-lease` exists only in one cloud container.)
 - 2026-11-09 (chief-of-staff): The allow rule `Bash(git push --force-with-lease *)` didn't check whose branch it was, and `origin` has branches from other sessions (`claude/*`, `premier-sales-agent`) → narrowed to `agent/` branches; before force-pushing, still confirm you created that branch in this session.
-- 2026-11-19 (chief-of-staff): The narrowed rule `Bash(git push --force-with-lease* origin agent/*)` still matches the source side of a refspec: fresh `claude -p` dry runs of `... origin agent/probe:premier-sales-agent` and `... origin agent/probe:refs/heads/main` were both ALLOWED with no prompt (the deny `*:main` misses `:refs/heads/main`) → never push `agent/x:<other>`; the rule does not yet protect other branches by itself.
+- 2026-11-19 (chief-of-staff): The narrowed rule `Bash(git push --force-with-lease* origin agent/*)` still matches the source side of a refspec: fresh `claude -p` dry runs of `... origin agent/probe:premier-sales-agent` and `... origin agent/probe:refs/heads/main` were both ALLOWED with no prompt (the deny `*:main` misses `:refs/heads/main`) → fixed with a PreToolUse hook (`.claude/hooks/guard-force-push.sh`) that blocks any force push whose destination isn't an `agent/` branch; fresh-session tests blocked all 4 disguised forms.
 - 2026-11-19 (chief-of-staff): After a squash merge, the local checkout stayed on the merged branch (`cos-review-2`) while other sessions moved `origin/main` 8 commits ahead → before editing `PLAYBOOK.md`, `git fetch` and start a new `agent/` branch from `origin/main`.
 - 2026-11-09 (chief-of-staff): Main told the user "the repo is private" without checking. `gh api repos/AdmCooke/agent-dashboard` says public → `gh` REST reads work here (GraphQL returns 403), so check before advising.
 - 2026-11-09 (chief-of-staff): A nested `claude -p` run writes into the parent session's transcript as `user:` turns ("Run exactly…", "Reply with exactly: OK") → reviewers: don't mistake those for the user's requests.
@@ -42,12 +44,11 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-19 (main): The brand-check lint flags "#HIC" in the required license line "CT Lic. #HIC.0659657" as an uppercase hashtag → treat that one hit as a false positive, the license rule wins.
 - 2026-11-19 (main): Remote branches can't be deleted from a cloud session: `git push origin --delete <branch>` gets a 403 from the git proxy, `gh api -X DELETE .../git/refs/heads/<branch>` is refused as a write path, and the GitHub MCP has no delete-branch tool → hand the user the `git push origin --delete` commands to run locally, or point them to the branch list on github.com.
 
+- 2026-11-19 (main): Deny rules with a `:` in them (`Bash(... origin agent/*:*)`) matched nothing in fresh-session tests, while the same push was allowed → permission patterns can't guard `src:dst` refspecs; use a PreToolUse hook and test it.
+- 2026-11-19 (main): `gh api -X PATCH repos/...` to change a repo setting (auto-delete merged branches) was blocked by auto mode as destructive → give the user the setting to change on github.com.
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
 ## Open questions for the user
-
-- 2026-11-19: Close the force-push gap by adding two project deny rules, `Bash(git push --force-with-lease* origin agent/*:*)` and `Bash(git push --force-with-lease* origin agent/* *)`? (The second would also block flags placed after the branch name, e.g. `origin agent/x --dry-run`.)
-- 2026-11-19: May agents delete their own merged branches on `origin` (this session left `cos-review-2`, `playbook-answers`, `force-push-permission`, `chief-of-staff-agent`, `disable-unused-plugins`), and may they keep branching off `main` for playbook edits even when the local checkout is elsewhere?
 
 ## Answers from the user
 
@@ -57,3 +58,6 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-09: Force-push scope: the user asked for best practice → narrowed to `agent/` branches (allow rule `Bash(git push --force-with-lease* origin agent/*)`) → standing rule.
 - 2026-11-09: Public repo: best practice → treat all pushed text as public → standing rule. Whether it should stay public is the user's call.
 - 2026-11-09: "Done": best practice → only once it's in the repo or on claude.ai; container-only changes are reported as temporary → standing rule.
+- 2026-11-19: Close the force-push gap: best practice → a PreToolUse hook that checks each force push's destination, instead of the two deny rules (the colon rule didn't work, and the other blocked flags after the branch name) → in `.claude/settings.json`.
+- 2026-11-19: Branch cleanup: best practice → agents delete their own merged branches where they can, else list them for the user; GitHub's "Automatically delete head branches" setting is for the user to turn on; always branch off `origin/main` → standing rules.
+- 2026-11-19: Verdict: best practice → ⚠️ is right when an agent states a safety guarantee it only partly tested, even if the rest of its work is correct.
