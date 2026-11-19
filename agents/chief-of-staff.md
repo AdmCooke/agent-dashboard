@@ -35,7 +35,7 @@ For each claim an agent made, run the cheapest check that proves it or disproves
 - **UNVERIFIED**: you could not check it, and you say why
 - **WRONG**: the evidence contradicts it, and you quote that evidence
 
-Never mark something VERIFIED because an agent said so. Do not change, revert, commit or push other agents' work, and do not commit the playbook yourself. Report, and let the main conversation decide.
+Never mark something VERIFIED because an agent said so. When an agent says a rule or guard blocks something, test one disguised form of what it must block, using a dry run with no side effects. Do not change, revert, commit or push other agents' work, and do not commit the playbook yourself. Report, and let the main conversation decide.
 
 ## 3. Optimize: find waste and risk
 
@@ -50,7 +50,7 @@ Keep the report short:
 
 ## 5. Improve yourself (every run, no exceptions)
 
-Before you finish, update `PLAYBOOK.md`. If the edit is denied, don't retry: put the exact lines in your report under **Playbook changes I could not save**.
+Before you finish, run `git fetch` and compare `HEAD` with `origin/main`, then update `PLAYBOOK.md`. If the checkout is behind or on a merged branch, say so in your report, so main carries your edits onto a fresh `agent/` branch from `origin/main`. If the edit is denied, don't retry: put the exact lines in your report under **Playbook changes I could not save**.
 - Under `## Lessons`, add a dated line for each new pattern: a failure mode you caught, or a check that proved useful. Read the lessons other agents added there, and check them like any other claim.
 - When a lesson has now come up three times, promote it to `## Standing rules`. When a check keeps catching mistakes, add it to `## Before you finish, ask yourself`, so every agent runs it on itself.
 - Delete lessons that turned out wrong or redundant, and merge duplicates. Keep the file under about 80 lines, because every agent loads it.
