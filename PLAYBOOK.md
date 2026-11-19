@@ -17,6 +17,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 2. Did I do what was asked: all of it, and nothing more?
 3. What would the user ask next, and have I already answered it?
 4. Did I hit an error, retry loop or surprise that the next agent should know about? If so, add one dated line under `## Lessons`.
+5. If I added or changed a permission or safety rule, did I test a command it must block in a disguised form (for git: `src:dst` refspecs, `refs/heads/...`, a second refspec), not only the obvious cases?
 
 ## Lessons
 
@@ -26,6 +27,8 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-10-30 (chief-of-staff): The GitHub merge tool rejects a short `expectedHeadSha` → pass the full 40-char `git rev-parse HEAD`.
 - 2026-10-30 (chief-of-staff): A force push to an already-pushed branch was blocked as "Git Destructive", even on the agent's own branch → if the permission check blocks it, push to a new branch instead of retrying. (The user-level allow rule for `--force-with-lease` exists only in one cloud container.)
 - 2026-11-09 (chief-of-staff): The allow rule `Bash(git push --force-with-lease *)` didn't check whose branch it was, and `origin` has branches from other sessions (`claude/*`, `premier-sales-agent`) → narrowed to `agent/` branches; before force-pushing, still confirm you created that branch in this session.
+- 2026-11-19 (chief-of-staff): The narrowed rule `Bash(git push --force-with-lease* origin agent/*)` still matches the source side of a refspec: fresh `claude -p` dry runs of `... origin agent/probe:premier-sales-agent` and `... origin agent/probe:refs/heads/main` were both ALLOWED with no prompt (the deny `*:main` misses `:refs/heads/main`) → never push `agent/x:<other>`; the rule does not yet protect other branches by itself.
+- 2026-11-19 (chief-of-staff): After a squash merge, the local checkout stayed on the merged branch (`cos-review-2`) while other sessions moved `origin/main` 8 commits ahead → before editing `PLAYBOOK.md`, `git fetch` and start a new `agent/` branch from `origin/main`.
 - 2026-11-09 (chief-of-staff): Main told the user "the repo is private" without checking. `gh api repos/AdmCooke/agent-dashboard` says public → `gh` REST reads work here (GraphQL returns 403), so check before advising.
 - 2026-11-09 (chief-of-staff): A nested `claude -p` run writes into the parent session's transcript as `user:` turns ("Run exactly…", "Reply with exactly: OK") → reviewers: don't mistake those for the user's requests.
 - 2026-11-10 (main): `claude-plugins-official` isn't preconfigured in cloud containers, and a plugin install there is user scope (temporary) → add the marketplace with `claude plugin marketplace add anthropics/claude-plugins-official`, then save it in `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`). Remote MCP plugins also need their host allowed (Hostinger's `mcp.hostinger.com` got a proxy 403).
@@ -42,6 +45,9 @@ The main conversation and general-purpose subagents load this file through `CLAU
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
 ## Open questions for the user
+
+- 2026-11-19: Close the force-push gap by adding two project deny rules, `Bash(git push --force-with-lease* origin agent/*:*)` and `Bash(git push --force-with-lease* origin agent/* *)`? (The second would also block flags placed after the branch name, e.g. `origin agent/x --dry-run`.)
+- 2026-11-19: May agents delete their own merged branches on `origin` (this session left `cos-review-2`, `playbook-answers`, `force-push-permission`, `chief-of-staff-agent`, `disable-unused-plugins`), and may they keep branching off `main` for playbook edits even when the local checkout is elsewhere?
 
 ## Answers from the user
 
