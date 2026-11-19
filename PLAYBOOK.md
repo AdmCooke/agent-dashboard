@@ -34,6 +34,10 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-10 (main): `claude-plugins-official` isn't preconfigured in cloud containers, and a plugin install there is user scope (temporary) → add the marketplace with `claude plugin marketplace add anthropics/claude-plugins-official`, then save it in `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`). Remote MCP plugins also need their host allowed (Hostinger's `mcp.hostinger.com` got a proxy 403).
 - 2026-11-10 (main): Hostinger's MCP still fails after install: `mcp.hostinger.com` now passes the proxy, but it rejects the saved "Hostinger API token" (`X-Proxy-Error: upstream auth failed`) and asks for OAuth via `auth.hostinger.com`, which the proxy blocks → check `claude mcp list` and the response headers before calling a plugin working.
 
+- 2026-11-19 (main): The cloud container's proxy carries HTTPS only: plain http:// curls return 405 and non-allowlisted hosts fail DNS, and WebFetch fails the same way → add hosts with update_environment for HTTPS, and get http:// redirect proof from Adam's own terminal or an outside fetch (Bright Data scrape_as_markdown reaches any host).
+- 2026-11-19 (main): No Claude-in-Chrome tools exist in a cloud session, and Adam's Remote Control folder was listed as not_available → WP Admin, Elementor and Cloudflare changes need a desktop session with the Chrome extension; from the cloud, deliver drafts and exact change lists instead.
+- 2026-11-19 (main): The brand-check lint flags "#HIC" in the required license line "CT Lic. #HIC.0659657" as an uppercase hashtag → treat that one hit as a false positive, the license rule wins.
+
 ## Open questions for the user
 
 ## Answers from the user
