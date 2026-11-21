@@ -1,5 +1,8 @@
 {
   "name": "agent-dashboard",
   "owner": { "name": "admcooke" },
-  "plugins": [{ "name": "agent-dashboard", "source": "./" }]
+  "plugins": [
+    { "name": "agent-dashboard", "source": "./" },
+    { "name": "premier-sales-agent", "source": "./premier-sales-agent" }
+  ]
 }
