@@ -32,6 +32,28 @@ test('shows main and subagent activity on every surface', async ($, on) => {
   }
 })
 
+test('a card stays running until every parallel tool call returns', async ($, on) => {
+  let release = () => {}
+  const slow = new Promise<void>(resolve => { release = resolve })
+  on('agent.list', () => ({ value: [] }))
+  on('tool.call', async (_, e) => {
+    if ((e as { command?: string }).command === 'sleep 5') await slow
+    return { result: {} }
+  })
+
+  const pending = $.tool.call({ tool: 'Bash', command: 'sleep 5' })
+  await $.tool.call({ tool: 'Bash', command: 'ls' })
+  let ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect((await ui.find({ type: 'Text', text: /2 calls/ }))?.text).toMatch(/^▶/)
+  await ui.unmount()
+
+  release()
+  await pending
+  ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect((await ui.find({ type: 'Text', text: /2 calls/ }))?.text).toMatch(/^✓/)
+  await ui.unmount()
+})
+
 test('each card shows the tokens its model requests used', async ($, on) => {
   on('agent.list', () => ({
     value: [{ id: 'a1', description: 'Find auth code', type: 'Explore', status: 'running' }],

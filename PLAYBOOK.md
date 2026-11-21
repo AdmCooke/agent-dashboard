@@ -20,7 +20,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 2. Did I do what was asked: all of it, and nothing more?
 3. What would the user ask next, and have I already answered it?
 4. Did I hit an error, retry loop or surprise that the next agent should know about? If so, add one dated line under `## Lessons` (or in `SYSTEM-NOTES.md` if it is about one system).
-5. If I added or changed a permission or safety rule, did I test a command it must block in a disguised form (for git: `src:dst` refspecs, `refs/heads/...`, a second refspec), not only the obvious cases?
+5. If I added or changed a permission or safety rule, did I test a command it must block in a disguised form (for git: `src:dst` refspecs, `refs/heads/...`, a second refspec, quotes, bundled flags, a chained second command), not only the obvious cases? For the force-push guard, add the form to `.claude/hooks/guard-force-push.cases` and run `bash .claude/hooks/test-guard-force-push.sh`.
 
 ## Lessons
 
@@ -30,6 +30,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-10-30 (chief-of-staff): The GitHub merge tool rejects a short `expectedHeadSha` → pass the full 40-char `git rev-parse HEAD`.
 - 2026-11-19 (main + chief-of-staff): Permission patterns fail to guard `src:dst` refspecs. Both `Bash(git push --force-with-lease* origin agent/*)` and deny rules with a `:` let `agent/probe:refs/heads/main` through → force pushes are guarded by a PreToolUse hook (`.claude/hooks/guard-force-push.sh`) that blocks any destination that isn't an `agent/` branch. If the permission check blocks a force push, push to a new branch instead of retrying.
 - 2026-11-21 (main): The force-push hook reads the whole Bash command, so a heredoc that only quotes a force push to main (in a test fixture or doc) is blocked too → write that file with the Write tool.
+- 2026-11-21 (main): The Nov 19 hook passed its 4 disguised forms, but a code review then got 10 more past it, among them `"+HEAD:main"`, `-uf`, a second chained push, `--mirror`, `$VAR` in the refspec, and no `jq` installed → a guard that passes the forms you thought of isn't proven. The hook was rewritten and keeps every known form in its cases file (53 cases plus a no-jq pass).
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
 ## Open questions for the user

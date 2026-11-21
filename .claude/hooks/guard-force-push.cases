@@ -1,0 +1,67 @@
+# Cases for guard-force-push.sh, run by test-guard-force-push.sh.
+# Each line: block or allow, a tab, then the Bash command the agent would run.
+# Every disguised form a reviewer or agent found must be here.
+
+# Plain force pushes to a branch that is not agent/
+block	git push --force origin main
+block	git push -f origin main
+block	git push origin main --force
+block	git push origin main -f
+block	/usr/bin/git push -f origin main
+block	git push --force origin agent/x main
+# Refspec forms (playbook lesson, 2026-11-19)
+block	git push origin +main
+block	git push --force origin HEAD:main
+block	git push --force origin HEAD:refs/heads/main
+block	git push --force-with-lease origin agent/probe:main
+block	git push --force-with-lease origin agent/probe:refs/heads/main
+block	git push --force-with-lease origin agent/probe:premier-sales-agent
+# Quoting and bundled short flags (code review, 2026-11-21)
+block	git push origin "+HEAD:main"
+block	git push origin '+HEAD:main'
+block	git push -uf origin main
+block	git push -fu origin main
+# A force push chained after a harmless command
+block	git push origin agent/x && git push --force origin main
+block	git push origin agent/x; git push --force origin main
+block	git status | cat && git push -f origin main
+block	(git push -f origin main)
+block	bash -c "git push -f origin main"
+# Pushes that reach many branches at once
+block	git push --mirror origin
+block	git push --force --all origin
+block	git push --force-with-lease --tags origin
+# The shell rewrites the destination after the hook reads it
+block	B=:main; git push -f origin agent/x$B
+block	git push -f origin agent/x`echo :main`
+block	git push -f origin "agent/x$(printf ':main')"
+block	G=git; $G push -f origin main
+block	git push --force origin agent/{x,main}
+block	git push --force origin ma\in
+# No branch named, so the destination depends on the checkout or config
+block	git push --force
+block	git push --force origin HEAD
+block	cd ../other && git push --force-with-lease
+block	git -C ../other push --force
+block	git push -o ci.skip --force origin main
+# Output redirection must not hide or invent a destination
+block	git push -f origin main 2>&1 | tail -2
+block	git push -f origin main > /tmp/push.log
+
+# Allowed: no force, or every destination is an agent/ branch
+allow	git status
+allow	git push origin main
+allow	git push -u origin claude/laughing-ritchie-r6c6c1
+allow	git push origin agent/x && git push origin main
+allow	git push --force-with-lease origin agent/x
+allow	git push --force-with-lease=agent/x origin agent/x
+allow	git push -f origin HEAD:agent/x
+allow	git push --force origin refs/heads/agent/x
+allow	git push --force-with-lease origin "agent/x"
+allow	git -c push.default=current push --force-with-lease origin agent/x
+allow	git -C ../other push --force-with-lease origin agent/x
+allow	git push -o ci.skip --force-with-lease origin agent/x
+allow	git stash push -m wip
+allow	git push --force-with-lease origin agent/x 2>&1
+allow	git push --force-with-lease origin agent/x > /tmp/push.log 2>&1
+allow	git push --force-with-lease origin agent/x 2>/dev/null | tail -2
