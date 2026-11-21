@@ -22,10 +22,10 @@
     display: flex; flex-direction: column; gap: 2px; padding: 3px 8px;
     background: var(--bg); border-bottom: 1px solid var(--line);
   }
-  .row { display: flex; align-items: center; gap: 2px; height: 28px; overflow: hidden; flex-wrap: nowrap; }
+  .row { display: flex; align-items: center; gap: 0; height: 28px; overflow: hidden; flex-wrap: nowrap; }
   .chip {
-    flex: none; display: inline-flex; align-items: center; gap: 6px; height: 28px; max-width: 180px;
-    padding: 0 9px; border: 0; border-radius: 14px; background: transparent; color: inherit;
+    flex: none; display: inline-flex; align-items: center; gap: 5px; height: 28px; max-width: 180px;
+    padding: 0 5px; border: 0; border-radius: 14px; background: transparent; color: inherit;
     font: inherit; text-decoration: none; cursor: pointer; white-space: nowrap;
   }
   .chip:hover, .chip.open { background: var(--hover); }
@@ -37,7 +37,7 @@
   .chip.disabled { opacity: .45; cursor: default; }
   .labels-short .chip span { max-width: 72px; }
   .labels-icons .chip.link span { display: none; }
-  .labels-icons .chip.link { padding: 0 6px; }
+  .labels-icons .chip.link { padding: 0 4px; }
   .more { margin-left: auto; padding: 0 10px; font-size: 14px; color: var(--muted); }
   .menu {
     position: fixed; z-index: 1; min-width: 220px; max-width: 360px; padding: 6px 0; overflow: auto;
