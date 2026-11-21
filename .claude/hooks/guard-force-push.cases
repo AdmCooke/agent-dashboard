@@ -44,6 +44,30 @@ block	git push --force origin HEAD
 block	cd ../other && git push --force-with-lease
 block	git -C ../other push --force
 block	git push -o ci.skip --force origin main
+# The shell supplies the force or the destination (Chief of Staff review, 2026-11-21).
+# <NL> is a newline, so the last one is a backslash-continued line.
+block	git push origin \+main
+block	git push origin main \-f
+block	F=-f; git push $F origin main
+block	P=+main; git push origin $P
+block	git push origin $'\x2bmain'
+block	git push origin main -$'f'
+block	git push origin main \<NL>  --force
+block	touch +main; git push origin [+]main
+block	git push origin {+main,}
+block	git push -u origin "$(git branch --show-current)"
+# Git config supplies a forced refspec, a mirror or an alias
+block	git config remote.origin.push +HEAD:refs/heads/main; git push origin
+block	git config --global REMOTE.origin.PUSH +HEAD:refs/heads/main
+block	git -c remote.origin.push=+HEAD:refs/heads/main push origin
+block	GIT_CONFIG_PARAMETERS="'remote.origin.mirror=true'" git push origin
+block	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.push GIT_CONFIG_VALUE_0=+HEAD:main git push origin
+block	git config alias.fp "push --force"
+block	git remote add --mirror=push backup ../backup.git
+# Deleting a branch that is not agent/
+block	git push origin --delete premier-sales-agent
+block	git push origin :premier-sales-agent
+block	git push -d origin main
 # Output redirection must not hide or invent a destination
 block	git push -f origin main 2>&1 | tail -2
 block	git push -f origin main > /tmp/push.log
@@ -65,3 +89,10 @@ allow	git stash push -m wip
 allow	git push --force-with-lease origin agent/x 2>&1
 allow	git push --force-with-lease origin agent/x > /tmp/push.log 2>&1
 allow	git push --force-with-lease origin agent/x 2>/dev/null | tail -2
+allow	git push
+allow	git push -u origin HEAD
+allow	git push origin --delete agent/old-topic
+allow	git push origin :agent/old-topic
+allow	git config --get remote.origin.push
+allow	git config remote.origin.pushurl https://example.invalid/x.git
+allow	cd /tmp && git status
