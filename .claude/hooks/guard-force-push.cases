@@ -140,7 +140,6 @@ block	git -c push.default=current push --force-with-lease origin agent/x
 block	git -C ../other push --force-with-lease origin agent/x
 block	git push --force-with-lease origin agent/x > /tmp/push.log 2>&1
 block	git push --force-with-lease origin agent/x  # rewrite my own branch
-block	git config push.default upstream
 block	git p''ush -f origin main
 block	gh pr create --title "Guard fix" --body 'Blocks git push -f origin main'
 block	rg "git push" .
@@ -156,3 +155,17 @@ allow	grep -rn push .
 allow	git stash push -m wip
 allow	gh pr view 18 --json state
 block	git commit -m "$(cat <<'EOF'<NL>Document how to publish a branch<NL><NL>Run `git push -u origin agent/topic` once the tests pass.<NL>EOF<NL>)"
+
+# Third independent review, 2026-11-21 (state-dependent forms are in test-guard-force-push.sh)
+block	env -S'git push -f origin main'
+block	git -c $'\x61lias.x=\x70ush' x -f origin main
+block	GIT_CONFIG_SYSTEM=a3.cfg git x -f origin main
+block	gh api --method=DELETE repos/AdmCooke/agent-dashboard/git/refs/heads/premier-sales-agent
+block	gh api graphql -f query='mutation { deleteRef(input:{refId:"x"}) { clientMutationId } }'
+allow	git add .claude/hooks/guard-force-push.sh .claude/hooks/guard-force-push.cases
+allow	git checkout -b agent/fix-push-guard origin/main
+allow	git commit -qm 'Explain the push guard'
+allow	docker push example/image:latest
+
+# v6: push.default is read at push time, so changing it is fine.
+allow	git config push.default upstream

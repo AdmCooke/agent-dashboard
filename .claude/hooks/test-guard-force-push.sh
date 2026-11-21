@@ -61,6 +61,36 @@ check block "$mirror" "git push origin"
 pushdefault=$(repo); git -C "$pushdefault" config remote.backup.mirror true; git -C "$pushdefault" config remote.pushDefault backup
 check block "$pushdefault" "git push"
 
+# A symbolic ref named agent/* can point at another branch.
+sym=$(repo); git -C "$sym" symbolic-ref refs/heads/agent/sneaky refs/heads/main
+check block "$sym" "git push --force-with-lease origin agent/sneaky"
+# A legacy .git/remotes file can carry forced push lines.
+legacy=$(repo); mkdir -p "$legacy/.git/remotes"; printf 'URL: ../bare.git\nPush: +refs/heads/main:refs/heads/main\n' > "$legacy/.git/remotes/gh"
+check block "$legacy" "git push gh"
+# A forced push refspec in config, with no force flag on the command line.
+cfgforce=$(repo); git -C "$cfgforce" config remote.origin.push +refs/heads/agent/x:refs/heads/main
+check block "$cfgforce" "git push origin agent/x"
+# With no origin, git falls back to the only remote.
+single=$(repo); git -C "$single" remote add gh ../bare.git; git -C "$single" config remote.gh.push +refs/heads/main:refs/heads/main
+check block "$single" "git push"
+# Aliases: quoted, nested, read from the -C repo, and run through a symlink to git.
+aliased=$(repo)
+git -C "$aliased" config alias.q "pu'sh'"; git -C "$aliased" config alias.x y; git -C "$aliased" config alias.y push
+check block "$root" "git -C $aliased q -f origin main"
+check block "$root" "git -C $aliased x -f origin main"
+links=$(mktemp -d); ln -s "$(command -v git)" "$links/g"
+check block "$root" "$links/g push -f origin main"
+# Known gap, no-reader mode only (neither jq nor python3): a symlinked git running a pushing alias has no
+# text to catch, so this one is checked with jq and python3 only.
+json=$(jq -cn --arg c "$links/g -C $aliased x -f origin main" --arg d "$root" '{cwd: $d, tool_input: {command: $c}}')
+for mode in jq py; do
+  run $mode "$json"; got=$(verdict $?)
+  if [ "$got" = block ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL [$mode] symlinked git alias let through"; fi
+done
+# Globs that expand to git or git-push.
+check block "$root" "$(dirname "$(command -v git)")/g?t push -f origin main"
+check block "$root" "$(git --exec-path)/git-pus? -f origin main"
+
 # Input the JSON readers can't decode (a lone surrogate) must fail closed.
 raw='{"cwd":"/tmp","tool_input":{"command":"git push -f origin main \ud800"}}'
 for mode in jq py none; do
