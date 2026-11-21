@@ -32,53 +32,102 @@ async function syncContentScript() {
   }
 }
 
+// Every website asks for the same bookmark data, so build it once and reuse it until something changes.
+let payloadCache = null;
+function getPayload() {
+  if (!payloadCache) {
+    payloadCache = trbPayload().catch((err) => {
+      payloadCache = null;
+      throw err;
+    });
+  }
+  return payloadCache;
+}
+
 let refreshTimer = 0;
-function scheduleRefresh() {
+function bookmarksChanged() {
+  payloadCache = null;
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => broadcast({ type: 'trb:refresh' }), 200);
 }
 
-const iconCache = new Map();
-async function favicon(url) {
-  if (iconCache.has(url)) return iconCache.get(url);
+// Favicons are kept for the browser session, so pages don't refetch them each time this worker wakes up.
+async function fetchFavicon(url) {
   try {
     const res = await fetch(chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(url)}&size=32`));
     const bytes = new Uint8Array(await res.arrayBuffer());
     let bin = '';
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    const data = `data:${res.headers.get('content-type') || 'image/png'};base64,${btoa(bin)}`;
-    if (iconCache.size > 500) iconCache.clear();
-    iconCache.set(url, data);
-    return data;
+    return `data:${res.headers.get('content-type') || 'image/png'};base64,${btoa(bin)}`;
   } catch {
     return '';
   }
 }
 
+async function favicons(urls) {
+  const keys = urls.map((u) => 'fav:' + u);
+  let stored = {};
+  try {
+    stored = await chrome.storage.session.get(keys);
+  } catch {}
+  const out = {};
+  const missing = [];
+  urls.forEach((u, i) => {
+    if (stored[keys[i]]) out[u] = stored[keys[i]];
+    else missing.push(u);
+  });
+  const fresh = await Promise.all(missing.map(fetchFavicon));
+  const save = {};
+  missing.forEach((u, i) => {
+    out[u] = fresh[i];
+    if (fresh[i]) save['fav:' + u] = fresh[i];
+  });
+  if (Object.keys(save).length) chrome.storage.session.set(save).catch(() => {});
+  return out;
+}
+
+function settle(promise, reply) {
+  promise.then(
+    () => reply(true),
+    () => reply(false)
+  );
+  return true;
+}
+
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
-  if (msg.type === 'trb:get') {
-    trbPayload().then(reply, () => reply(null));
-    return true;
-  }
-  if (msg.type === 'trb:move') {
-    const dest = { parentId: String(msg.dest.parentId) };
-    if (Number.isInteger(msg.dest.index)) dest.index = msg.dest.index;
-    chrome.bookmarks.move(String(msg.id), dest).then(() => reply(true), () => reply(false));
-    return true;
-  }
-  if (msg.type === 'trb:create') {
-    const i = msg.info || {};
-    if (!/^(https?|file|ftp):/i.test(String(i.url))) return reply(false);
-    const info = { parentId: String(i.parentId), title: String(i.title || '').slice(0, 200), url: String(i.url) };
-    if (Number.isInteger(i.index)) info.index = i.index;
-    chrome.bookmarks.create(info).then(() => reply(true), () => reply(false));
-    return true;
-  }
-  if (msg.type === 'trb:icons') {
-    Promise.all(msg.urls.map(favicon)).then((list) =>
-      reply(Object.fromEntries(msg.urls.map((u, i) => [u, list[i]])))
-    );
-    return true;
+  switch (msg.type) {
+    case 'trb:get':
+      getPayload().then(reply, () => reply(null));
+      return true;
+    case 'trb:icons':
+      favicons(msg.urls.map(String)).then(reply, () => reply({}));
+      return true;
+    case 'trb:move': {
+      const dest = { parentId: String(msg.dest.parentId) };
+      if (Number.isInteger(msg.dest.index)) dest.index = msg.dest.index;
+      return settle(chrome.bookmarks.move(String(msg.id), dest), reply);
+    }
+    case 'trb:create': {
+      const i = msg.info || {};
+      const info = { parentId: String(i.parentId), title: String(i.title || '').slice(0, 500) };
+      if (i.url != null) {
+        if (!/^(https?|file|ftp|javascript):/i.test(String(i.url))) return reply(false);
+        info.url = String(i.url);
+      }
+      if (Number.isInteger(i.index)) info.index = i.index;
+      return settle(chrome.bookmarks.create(info), reply);
+    }
+    case 'trb:update': {
+      const c = msg.changes || {};
+      const changes = {};
+      if (typeof c.title === 'string') changes.title = c.title.slice(0, 500);
+      if (typeof c.url === 'string') changes.url = c.url;
+      return settle(chrome.bookmarks.update(String(msg.id), changes), reply);
+    }
+    case 'trb:remove': {
+      const id = String(msg.id);
+      return settle(msg.tree ? chrome.bookmarks.removeTree(id) : chrome.bookmarks.remove(id), reply);
+    }
   }
 });
 
@@ -86,11 +135,13 @@ chrome.runtime.onInstalled.addListener(syncContentScript);
 chrome.runtime.onStartup.addListener(syncContentScript);
 chrome.permissions.onRemoved.addListener(syncContentScript);
 chrome.storage.onChanged.addListener((_changes, area) => {
-  if (area === 'sync') syncContentScript();
+  if (area !== 'sync') return;
+  payloadCache = null;
+  syncContentScript();
 });
 
 for (const ev of ['onCreated', 'onRemoved', 'onChanged', 'onMoved', 'onChildrenReordered', 'onImportEnded']) {
-  chrome.bookmarks[ev].addListener(scheduleRefresh);
+  chrome.bookmarks[ev].addListener(bookmarksChanged);
 }
 
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());

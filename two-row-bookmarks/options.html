@@ -22,7 +22,7 @@
     .field { display: grid; gap: 4px; margin: 10px 0; }
     select, textarea { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
     textarea { min-height: 80px; resize: vertical; }
-    #folders[hidden] { display: none; }
+    #folders[hidden], .field[hidden] { display: none; }
     #status { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 16px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
     #status.show { opacity: 1; }
     kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
@@ -35,14 +35,20 @@
   <p class="sub">Changes save as you make them.</p>
 
   <section>
-    <h2>What goes in the two rows</h2>
+    <h2>Rows</h2>
+    <label class="opt"><input type="radio" name="rows" value="1"><span>1 row <span class="hint">(slimmer bar, more room for the page)</span></span></label>
+    <label class="opt"><input type="radio" name="rows" value="2"><span>2 rows</span></label>
+  </section>
+
+  <section>
+    <h2>What goes in the rows</h2>
     <label class="opt"><input type="radio" name="mode" value="split">
-      <span>Bookmarks bar, wrapped onto two rows<br><span class="hint">Fills row 1, continues on row 2. Anything left over sits behind the » button.</span></span></label>
+      <span>Your Bookmarks bar<br><span class="hint">Fills the rows in order. Anything left over sits behind the » button.</span></span></label>
     <label class="opt"><input type="radio" name="mode" value="folders">
-      <span>A different folder on each row<br><span class="hint">Example: work links on top, personal links below.</span></span></label>
+      <span>A folder you pick for each row<br><span class="hint">Example: work links on top, personal links below.</span></span></label>
     <div id="folders">
       <div class="field"><label for="row1">Row 1 folder</label><select id="row1"></select></div>
-      <div class="field"><label for="row2">Row 2 folder</label><select id="row2"></select></div>
+      <div class="field" id="row2field"><label for="row2">Row 2 folder</label><select id="row2"></select></div>
     </div>
   </section>
 
@@ -67,6 +73,7 @@
 
   <section>
     <h2>Tips</h2>
+    <p class="hint" style="margin:0 0 8px">Right-click any bookmark or folder in the rows to open it in a new tab, edit its name or address, or delete it. Drag bookmarks to reorder them, or drop a link from any page onto the rows to save it.</p>
     <p class="hint" style="margin:0">Hide Chrome's own one-row bar with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on Mac) once the rows show on every site. Change the keyboard shortcut at <a href="#" id="shortcuts">chrome://extensions/shortcuts</a>.</p>
   </section>
 </main>

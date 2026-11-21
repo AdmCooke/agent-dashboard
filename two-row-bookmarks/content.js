@@ -61,7 +61,9 @@
       icon,
       ops: {
         move: (id, dest) => chrome.runtime.sendMessage({ type: 'trb:move', id, dest }),
-        create: (info) => chrome.runtime.sendMessage({ type: 'trb:create', info })
+        create: (info) => chrome.runtime.sendMessage({ type: 'trb:create', info }),
+        update: (id, changes) => chrome.runtime.sendMessage({ type: 'trb:update', id, changes }),
+        remove: (id, tree) => chrome.runtime.sendMessage({ type: 'trb:remove', id, tree })
       }
     });
   }

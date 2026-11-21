@@ -33,15 +33,29 @@ async function init() {
     sel.addEventListener('change', () => save({ [id]: sel.value }));
   }
 
-  const showFolders = (mode) => ($('folders').hidden = mode !== 'folders');
+  let rows = s.rows;
+  let mode = s.mode;
+  const showFolders = () => {
+    $('folders').hidden = mode !== 'folders';
+    $('row2field').hidden = rows === 1;
+  };
+  document.querySelectorAll('input[name=rows]').forEach((r) => {
+    r.checked = Number(r.value) === rows;
+    r.addEventListener('change', () => {
+      rows = Number(r.value);
+      showFolders();
+      save({ rows });
+    });
+  });
   document.querySelectorAll('input[name=mode]').forEach((r) => {
     r.checked = r.value === s.mode;
     r.addEventListener('change', () => {
-      showFolders(r.value);
-      save({ mode: r.value, row1: $('row1').value, row2: $('row2').value });
+      mode = r.value;
+      showFolders();
+      save({ mode, row1: $('row1').value, row2: $('row2').value });
     });
   });
-  showFolders(s.mode);
+  showFolders();
 
   document.querySelectorAll('input[name=labels]').forEach((r) => {
     r.checked = r.value === s.labels;

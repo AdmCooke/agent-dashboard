@@ -1,8 +1,8 @@
 # Two Row Bookmarks
 
-A Chrome extension that shows your bookmarks in two clean rows instead of Chrome's single row.
+A Chrome extension that shows your bookmarks in one or two clean rows, with room for far more than Chrome's own bar.
 
-Chrome does not let extensions change its built-in bookmarks bar, so this extension draws its own two-row bar:
+Chrome does not let extensions change its built-in bookmarks bar, so this extension draws its own bar:
 
 - On the New Tab page, always, with a search box that uses your default search engine.
 - At the top of every website, if you turn it on in settings.
@@ -16,8 +16,10 @@ Chrome does not let extensions change its built-in bookmarks bar, so this extens
 
 ## Use
 
-- **Split mode (default):** your Bookmarks bar fills row 1, then row 2. Anything left over sits behind the `»` button.
+- **Rows:** pick 1 or 2 rows in settings. Two is the default.
+- **Bookmarks bar mode (default):** your Bookmarks bar fills the rows in order. Anything left over sits behind the `»` button.
 - **Folder mode:** pick one folder for each row in settings.
+- **Right-click** a bookmark to open it in a new tab, edit its name or address, or delete it. Right-click a folder to rename or delete it. Deleting a bookmark or an empty folder shows an Undo button. Deleting a folder with bookmarks inside asks first.
 - Click a folder to open it. Click a subfolder inside the menu to go deeper, and use `‹` to go back.
 - Drag and drop:
   - Open a folder and drag a link out of it onto the rows.

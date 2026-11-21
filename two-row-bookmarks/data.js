@@ -3,13 +3,16 @@ const TRB_DEFAULTS = {
   mode: 'split', // 'split': Bookmarks bar wraps onto two rows. 'folders': one folder per row.
   row1: '',
   row2: '',
+  rows: 2, // 1 or 2
   labels: 'full', // 'full' | 'short' | 'icons'
   everyPage: false,
   exclude: ''
 };
 
-function trbSettings() {
-  return chrome.storage.sync.get(TRB_DEFAULTS);
+async function trbSettings() {
+  const s = await chrome.storage.sync.get(TRB_DEFAULTS);
+  s.rows = Number(s.rows) === 1 ? 1 : 2;
+  return s;
 }
 
 function trbFind(node, id) {
@@ -42,7 +45,11 @@ async function trbPayload() {
     return node && !node.url ? node : fallback;
   };
   const folders =
-    settings.mode === 'folders' ? [folder(settings.row1, t.bar), folder(settings.row2, t.other)] : [t.bar];
+    settings.mode !== 'folders'
+      ? [t.bar]
+      : settings.rows === 1
+        ? [folder(settings.row1, t.bar)]
+        : [folder(settings.row1, t.bar), folder(settings.row2, t.other)];
   return {
     settings,
     parents: folders.map((f) => f.id),
