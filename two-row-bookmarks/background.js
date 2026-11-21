@@ -60,6 +60,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
     trbPayload().then(reply, () => reply(null));
     return true;
   }
+  if (msg.type === 'trb:move') {
+    const dest = { parentId: String(msg.dest.parentId) };
+    if (Number.isInteger(msg.dest.index)) dest.index = msg.dest.index;
+    chrome.bookmarks.move(String(msg.id), dest).then(() => reply(true), () => reply(false));
+    return true;
+  }
+  if (msg.type === 'trb:create') {
+    const i = msg.info || {};
+    if (!/^(https?|file|ftp):/i.test(String(i.url))) return reply(false);
+    const info = { parentId: String(i.parentId), title: String(i.title || '').slice(0, 200), url: String(i.url) };
+    if (Number.isInteger(i.index)) info.index = i.index;
+    chrome.bookmarks.create(info).then(() => reply(true), () => reply(false));
+    return true;
+  }
   if (msg.type === 'trb:icons') {
     Promise.all(msg.urls.map(favicon)).then((list) =>
       reply(Object.fromEntries(msg.urls.map((u, i) => [u, list[i]])))

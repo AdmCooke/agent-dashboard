@@ -1,6 +1,10 @@
 const bar = new TwoRowBar(document.getElementById('bar'), {
   icon: (url) => chrome.runtime.getURL(`/_favicon/?pageUrl=${encodeURIComponent(url)}&size=32`),
-  extensionPage: true
+  extensionPage: true,
+  ops: {
+    move: (id, dest) => chrome.bookmarks.move(id, dest),
+    create: (info) => chrome.bookmarks.create(info)
+  }
 });
 
 async function refresh() {

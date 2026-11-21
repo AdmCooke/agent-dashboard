@@ -23,9 +23,8 @@ function trbFind(node, id) {
 }
 
 function trbSlim(n) {
-  return n.url
-    ? { id: n.id, title: n.title, url: n.url }
-    : { id: n.id, title: n.title, children: (n.children || []).map(trbSlim) };
+  const base = { id: n.id, parentId: n.parentId, index: n.index, title: n.title };
+  return n.url ? { ...base, url: n.url } : { ...base, children: (n.children || []).map(trbSlim) };
 }
 
 async function trbTree() {
@@ -38,14 +37,15 @@ async function trbTree() {
 
 async function trbPayload() {
   const [settings, t] = await Promise.all([trbSettings(), trbTree()]);
-  const kids = (id) => {
+  const folder = (id, fallback) => {
     const node = trbFind(t.root, id);
-    return node && !node.url ? node.children || [] : null;
+    return node && !node.url ? node : fallback;
   };
-  const groups =
-    settings.mode === 'folders'
-      ? [kids(settings.row1) || t.bar.children || [], kids(settings.row2) || t.other.children || []]
-      : [t.bar.children || []];
-  return { settings, groups: groups.map((g) => g.map(trbSlim)) };
+  const folders =
+    settings.mode === 'folders' ? [folder(settings.row1, t.bar), folder(settings.row2, t.other)] : [t.bar];
+  return {
+    settings,
+    parents: folders.map((f) => f.id),
+    groups: folders.map((f) => (f.children || []).map(trbSlim))
+  };
 }
-

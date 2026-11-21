@@ -19,6 +19,11 @@ Chrome does not let extensions change its built-in bookmarks bar, so this extens
 - **Split mode (default):** your Bookmarks bar fills row 1, then row 2. Anything left over sits behind the `»` button.
 - **Folder mode:** pick one folder for each row in settings.
 - Click a folder to open it. Click a subfolder inside the menu to go deeper, and use `‹` to go back.
+- Drag and drop:
+  - Open a folder and drag a link out of it onto the rows.
+  - Drag bookmarks along the rows to reorder them. A blue line shows where they land.
+  - Drop a bookmark onto a folder to file it there. Hold it over the folder for a moment and the folder opens, so you can drop it at an exact spot or into a subfolder.
+  - Drag a link from any web page, or the address from the address bar, onto the rows to save it as a bookmark.
 - Labels: full names, short names, or icons only.
 - **Every website:** turn it on in settings. Chrome asks for site access. The extension reads nothing from the sites you visit. It only draws the bar and pushes the page down to make room.
 - `Alt+Shift+2` hides or shows the rows on the current site. Change it at `chrome://extensions/shortcuts`.

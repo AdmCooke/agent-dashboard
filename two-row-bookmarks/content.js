@@ -57,7 +57,13 @@
       'all:initial !important;display:block !important;position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:2147483647 !important;'
     );
     html.append(host);
-    bar = new TwoRowBar(host, { icon });
+    bar = new TwoRowBar(host, {
+      icon,
+      ops: {
+        move: (id, dest) => chrome.runtime.sendMessage({ type: 'trb:move', id, dest }),
+        create: (info) => chrome.runtime.sendMessage({ type: 'trb:create', info })
+      }
+    });
   }
 
   function unmount() {
