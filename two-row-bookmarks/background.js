@@ -144,8 +144,6 @@ for (const ev of ['onCreated', 'onRemoved', 'onChanged', 'onMoved', 'onChildrenR
   chrome.bookmarks[ev].addListener(bookmarksChanged);
 }
 
-chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
-
 chrome.commands.onCommand.addListener((cmd, tab) => {
   if (cmd === 'toggle-bar' && tab && tab.id) chrome.tabs.sendMessage(tab.id, { type: 'trb:toggle' }).catch(() => {});
 });

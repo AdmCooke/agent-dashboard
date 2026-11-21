@@ -26,6 +26,7 @@
     display: flex; flex-direction: column; gap: 2px; padding: 3px 8px;
     background: var(--bg); border-bottom: 1px solid var(--line);
   }
+  .overlay .bar { border-bottom-color: transparent; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
   .row { display: flex; align-items: center; gap: ${GAP}px; height: 28px; overflow: hidden; flex-wrap: nowrap; }
   .row[hidden] { display: none; }
   .chip {
@@ -167,11 +168,12 @@
   }
 
   class TwoRowBar {
-    constructor(host, { icon, ops, extensionPage = false }) {
+    constructor(host, { icon, ops, openLink = null, extensionPage = false }) {
       this.host = host;
       this.icon = icon;
       this.ops = ops;
       this.extensionPage = extensionPage;
+      this.openLink = openLink; // set in the toolbar popup, where links open in the browser tab
       this.payload = null;
       this.menu = null;
       this.menuAnchor = null;
@@ -190,6 +192,7 @@
       this.lastDragOver = 0;
 
       const shadow = host.attachShadow({ mode: 'closed' });
+      this.shadow = shadow;
       const style = make('style');
       style.textContent = CSS;
       this.root = make('div', 'root');
@@ -250,6 +253,26 @@
     set(payload) {
       this.payload = payload;
       this.layout();
+    }
+
+    // True while a menu, edit box, Undo message or drag is open, so a sliding bar stays down.
+    isBusy() {
+      return !!(this.menu || this.ctx || this.panel || this.toast || this.drag);
+    }
+
+    // Floating over the page: drop shadow instead of a divider line.
+    setOverlay(on) {
+      this.root.classList.toggle('overlay', on);
+    }
+
+    blur() {
+      const a = this.shadow.activeElement;
+      if (a && a.blur) a.blur();
+    }
+
+    focusFirst() {
+      const first = this.bar.querySelector('.chip');
+      if (first) first.focus({ preventScroll: true });
     }
 
     layout() {
@@ -356,7 +379,17 @@
         a.href = n.url;
         a.target = '_top';
         a.rel = 'noopener';
-        a.addEventListener('click', () => this.closeMenu());
+        a.addEventListener('click', (e) => {
+          this.closeMenu();
+          if (!this.openLink) return;
+          e.preventDefault();
+          this.openLink(n.url, e.ctrlKey || e.metaKey || e.shiftKey);
+        });
+        a.addEventListener('auxclick', (e) => {
+          if (!this.openLink || e.button !== 1) return;
+          e.preventDefault();
+          this.openLink(n.url, true);
+        });
       }
       const img = make('img');
       img.alt = '';
@@ -486,12 +519,15 @@
         m.append(b);
       };
       if (n.url && !(this.extensionPage && /^javascript:/i.test(n.url))) {
-        const a = make('a', 'item', 'Open in new tab');
-        a.href = n.url;
-        a.target = '_blank';
-        a.rel = 'noopener';
-        a.addEventListener('click', () => this.closeCtx());
-        m.append(a);
+        if (this.openLink) add('Open in new tab', () => this.openLink(n.url, true));
+        else {
+          const a = make('a', 'item', 'Open in new tab');
+          a.href = n.url;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.addEventListener('click', () => this.closeCtx());
+          m.append(a);
+        }
       }
       add(n.url ? 'Edit' : 'Rename', () => this.openEditor(el, n));
       add('Delete', () => this.remove(el, n), 'danger');

@@ -5,7 +5,8 @@ A Chrome extension that shows your bookmarks in one or two clean rows, with room
 Chrome does not let extensions change its built-in bookmarks bar, so this extension draws its own bar:
 
 - On the New Tab page, always, with a search box that uses your default search engine.
-- At the top of every website, if you turn it on in settings.
+- In a popup when you click the extension's toolbar button. It works on any page and adds nothing to the page.
+- On websites, if you turn it on in settings. By default the rows stay hidden and slide down only when you rest the pointer at the very top edge of the page, so the site's own top bar stays where it is.
 
 ## Install
 
@@ -27,15 +28,19 @@ Chrome does not let extensions change its built-in bookmarks bar, so this extens
   - Drop a bookmark onto a folder to file it there. Hold it over the folder for a moment and the folder opens, so you can drop it at an exact spot or into a subfolder.
   - Drag a link from any web page, or the address from the address bar, onto the rows to save it as a bookmark.
 - Labels: full names, short names, or icons only.
-- **Every website:** turn it on in settings. Chrome asks for site access. The extension reads nothing from the sites you visit. It only draws the bar and pushes the page down to make room.
-- `Alt+Shift+2` hides or shows the rows on the current site. Change it at `chrome://extensions/shortcuts`.
+- **Toolbar popup:** click the extension's icon to see your rows on any page. Links open in the current tab. Ctrl-click (Cmd-click on Mac) or middle-click opens a new tab. Pin the icon from the puzzle piece menu to keep it in view.
+- **Websites:** turn it on in settings. Chrome asks for site access. The extension reads nothing from the sites you visit. Pick how it shows:
+  - **Slide down from the top edge (default):** hidden until you rest the pointer at the very top of the page for a moment. The rows slide down over the page and tuck away when you move off. The page never moves. Drag a link to the top edge to open the rows and drop it in.
+  - **Always visible:** sits above the site and pushes the page down.
+- `Alt+Shift+2` shows or hides the rows on the current site. Change it at `chrome://extensions/shortcuts`.
 - Add sites to "Never show on these sites" for web apps that fight with the bar.
 - Hide Chrome's own bar with `Ctrl+Shift+B` (`Cmd+Shift+B` on Mac).
-- Settings: click the extension's toolbar icon, or "Bookmark row settings" on the New Tab page.
+- Settings: click Settings in the toolbar popup, or "Bookmark row settings" on the New Tab page.
 
 ## Known limits
 
-- Some sites pin their own header to the top of the window. On those, the rows cover that header. Hide the rows there with the shortcut, or add the site to the never-show list.
+- In "Always visible" mode, sites that pin their own header to the top of the window get that header covered by the rows. The default slide-down mode avoids this.
+- Slide-down mode needs the pointer on the page itself. On a site whose top edge is an embedded frame, use the shortcut or the toolbar popup.
 - Chrome blocks extensions on `chrome://` pages and the Chrome Web Store, so the rows don't show there.
 - Bookmarklets (`javascript:` bookmarks) only run from the rows on a website, not on the New Tab page.
 
@@ -47,6 +52,8 @@ Chrome does not let extensions change its built-in bookmarks bar, so this extens
 | `bar.js` | Draws the two rows and the folder menus |
 | `data.js` | Reads bookmarks and settings |
 | `newtab.html`, `newtab.js` | New Tab page |
-| `content.js` | The bar on websites |
+| `popup.html`, `popup.js` | Toolbar popup |
+| `ext-page.js` | Shared setup for the New Tab page and the popup |
+| `content.js` | The rows on websites (slide-down or always visible) |
 | `background.js` | Turns the website bar on and off, keeps it in sync with bookmark edits |
 | `options.html`, `options.js` | Settings page |

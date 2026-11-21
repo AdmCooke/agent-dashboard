@@ -23,6 +23,8 @@
     select, textarea { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
     textarea { min-height: 80px; resize: vertical; }
     #folders[hidden], .field[hidden] { display: none; }
+    .sub-opts { margin: 2px 0 6px 26px; }
+    .sub-opts.off { opacity: .5; }
     #status { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 16px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; }
     #status.show { opacity: 1; }
     kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
@@ -61,9 +63,16 @@
 
   <section>
     <h2>Where the rows show</h2>
-    <p class="hint" style="margin-top:0">The rows always show on the New Tab page.</p>
+    <p class="hint" style="margin-top:0">The rows always show on the New Tab page and when you click the extension's toolbar button. That button adds nothing to the page you're on. To keep it in view, click the puzzle piece icon in Chrome's toolbar, then the pin next to Two Row Bookmarks.</p>
     <label class="opt"><input type="checkbox" id="everyPage">
-      <span>Show at the top of every website<br><span class="hint">Chrome asks for permission to run on all sites. The extension reads nothing from the sites you visit. Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>2</kbd> to hide or show the rows on the current site.</span></span></label>
+      <span>Also show on websites<br><span class="hint">Chrome asks for permission to run on all sites. The extension reads nothing from the sites you visit.</span></span></label>
+    <div id="pageModes" class="sub-opts">
+      <label class="opt"><input type="radio" name="pageMode" value="reveal">
+        <span>Slide down from the top edge (recommended)<br><span class="hint">Hidden until you rest the pointer at the very top of the page. Then the rows slide down over the page and tuck away when you move off. The site's own top bar stays where it is.</span></span></label>
+      <label class="opt"><input type="radio" name="pageMode" value="pinned">
+        <span>Always visible<br><span class="hint">Sits above the site and pushes the page down to make room.</span></span></label>
+      <p class="hint" style="margin:4px 0 0">Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>2</kbd> to show or hide the rows on the current site.</p>
+    </div>
     <div class="field">
       <label for="exclude">Never show on these sites</label>
       <textarea id="exclude" placeholder="mail.google.com&#10;youtube.com"></textarea>
@@ -74,7 +83,7 @@
   <section>
     <h2>Tips</h2>
     <p class="hint" style="margin:0 0 8px">Right-click any bookmark or folder in the rows to open it in a new tab, edit its name or address, or delete it. Drag bookmarks to reorder them, or drop a link from any page onto the rows to save it.</p>
-    <p class="hint" style="margin:0">Hide Chrome's own one-row bar with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on Mac) once the rows show on every site. Change the keyboard shortcut at <a href="#" id="shortcuts">chrome://extensions/shortcuts</a>.</p>
+    <p class="hint" style="margin:0">Hide Chrome's own one-row bar with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on Mac) if you turn on the rows for websites. Change the keyboard shortcut at <a href="#" id="shortcuts">chrome://extensions/shortcuts</a>.</p>
   </section>
 </main>
 <div id="status" role="status">Saved</div>
