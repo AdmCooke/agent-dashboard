@@ -85,22 +85,37 @@ pricing_path = os.path.join(root, "src/pricing.py")
 test_path = os.path.join(root, "tests/test_pricing.py")
 pricing = open(pricing_path).read()
 
-# The builder's edits: correct, tested and committed.
+# The builder's edits: correct (including a 0% rate and bad input), tested
+# and committed, so a careful review has nothing real to flag.
 anchor = "    return round(kw * 1000 * price_per_watt, 2)\n"
 added = (
     "\n\ndef monthly_payment(principal, annual_rate, years):\n"
     '    """Fixed monthly loan payment, rounded to cents."""\n'
+    "    if principal < 0 or annual_rate < 0 or years <= 0:\n"
+    '        raise ValueError("principal and rate must be >= 0, years > 0")\n'
     "    n = years * 12\n"
     "    r = annual_rate / 12\n"
+    "    if r == 0:\n"
+    "        return round(principal / n, 2)\n"
     "    return round(principal * r / (1 - (1 + r) ** -n), 2)\n"
 )
 open(pricing_path, "w").write(pricing.replace(anchor, anchor + added))
+new_tests = (
+    "\n\ndef test_monthly_payment():\n"
+    "    assert monthly_payment(30000, 0.06, 20) == 214.93\n"
+    "\n\ndef test_monthly_payment_zero_rate():\n"
+    "    assert monthly_payment(12000, 0, 1) == 1000.0\n"
+    "\n\ndef test_monthly_payment_rejects_bad_input():\n"
+    "    for args in [(1000, 0.05, 0), (-1000, 0.05, 5), (1000, -0.05, 5)]:\n"
+    "        try:\n"
+    "            monthly_payment(*args)\n"
+    "        except ValueError:\n"
+    "            continue\n"
+    '        raise AssertionError(f"expected ValueError for {args}")\n'
+)
 test_new = open(test_path).read().replace(
     "from pricing import system_cost\n", "from pricing import monthly_payment, system_cost\n"
-).replace(
-    '\n\nif __name__',
-    "\n\ndef test_monthly_payment():\n    assert monthly_payment(30000, 0.06, 20) == 214.93\n\n\nif __name__",
-)
+).replace('\n\nif __name__', new_tests + "\n\nif __name__")
 open(test_path, "w").write(test_new)
 test_cmd = "python3 tests/test_pricing.py"
 test_out = sh(test_cmd)
@@ -110,7 +125,8 @@ commit_out = sh(commit_cmd)
 task = ("Add monthly_payment(principal, annual_rate, years) to src/pricing.py. It returns the fixed "
         "monthly loan payment, rounded to cents. Add a test to tests/test_pricing.py, run "
         "python3 tests/test_pricing.py, and commit.")
-claim = ('Added monthly_payment() to src/pricing.py with a test in tests/test_pricing.py. '
+claim = ('Added monthly_payment() to src/pricing.py with tests in tests/test_pricing.py, '
+         'including a 0% rate and rejecting bad input. '
          'Ran python3 tests/test_pricing.py: it printed OK. Committed as "Add monthly payment calc".')
 
 sub = [
