@@ -33,14 +33,14 @@ Each case runs 3 times with the plugin and 3 times without it, so the report sho
 
 Results on 2026-11-21, with Opus as the main agent and 5 runs per case:
 
-| Chief of Staff model | Score | Estimated cost per run |
-|---|---|---|
-| Haiku (pinned in `agents/chief-of-staff.md`) | 0.997 | $0.224 |
-| Opus | 0.994 | $0.273 |
-| Sonnet | 0.983 | $0.236 |
-| No plugin | 0.983 | $0.191 |
+| Chief of Staff model | All 8 cases | 3 hard cases | Estimated cost per run |
+|---|---|---|---|
+| Haiku (pinned in `agents/chief-of-staff.md`) | 0.998 | 1.000 | $0.223 |
+| Opus | 0.996 | 1.000 | $0.308 |
+| Sonnet | 0.969 | 0.947 | $0.238 |
+| No plugin | 0.949 | 0.893 | $0.205 |
 
-Every arm caught every planted mistake and raised no false alarm. The plugin's edge is the lesson it saves to `PLAYBOOK.md`, which plain Opus did in none of its 5 runs. The cases are small, so telling the models apart on long sessions needs harder ones.
+Every arm caught every planted mistake and raised no false alarm. The plugin's edge is what it learns: plain Opus turned a lesson seen three times into a standing rule in 1 of 5 runs, while the Haiku and Opus reviewers did in 5 of 5. Haiku matched Opus at about 28% less cost per run.
 
 ## Install
 
