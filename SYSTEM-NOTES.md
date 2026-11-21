@@ -11,6 +11,7 @@ Facts about specific systems that agents learned the hard way. Agents read this 
 - 2026-11-09: `gh` REST reads work, GraphQL returns 403. `gh api repos/AdmCooke/agent-dashboard` says the repo is public.
 - 2026-11-10: `claude-plugins-official` isn't preconfigured, and a plugin install is user scope (temporary) → add the marketplace with `claude plugin marketplace add anthropics/claude-plugins-official`, then save it in `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`). Remote MCP plugins also need their host allowed.
 - 2026-11-21: With unused plugins off, 4 plugin MCP servers still fail to connect (canva, cloudflare, github, slack-by-salesforce), all with a proxy 403. Each duplicates a claude.ai connector that works, so the plugins stay on for their skills.
+- 2026-11-21: A built-in safety check refused `rm -rf $D` on a scratch folder in a compound command, because it can't resolve the variable → make a fresh folder per try with `mktemp -d <scratchpad>/name.XXXX` instead of deleting and reusing one.
 
 ## Plugin evals (`claude plugin eval`)
 
@@ -18,6 +19,10 @@ Facts about specific systems that agents learned the hard way. Agents read this 
 - 2026-11-21: Runs use "don't ask" mode. With narrow grants like `Bash(git *)`, the Chief of Staff's multi-line `jq` digest and compound commands were denied, so it fell back to reading code and scored 0.625 → grant `Bash`, `Write` and `Edit` in full. Each run is a throwaway sandboxed folder.
 - 2026-11-21: Runs don't load `CLAUDE.md` or `.claude/`, so each case's `scaffold.sh` builds its own git repo, `PLAYBOOK.md` and saved transcripts. The trace includes subagent tool calls (`parent_tool_use_id`), so `tool_used` graders see what the reviewer ran.
 - 2026-11-21: `--keep-temp` leaves `/tmp/claude-eval-*` behind as root-owned agent output. Read only its `out/` folder, then remove it with `chmod -R u+rwX <dir> && rm -rf <dir>`.
+- 2026-11-21: The default judge (Haiku) misgraded long reviews. Reports of 3,000+ characters that plainly met the criteria got FAIL from all three votes, and the CLI itself warns that LLM judges are noisy on long inputs → pass `--judge-model sonnet`. With it, the same suite went from 6 bad FAILs to none.
+- 2026-11-21: Without `--model`, the main agent in each run is Sonnet, not the Opus model this repo's sessions use → pass `--model` to test what the user runs. The reviewer subagent inherits that model unless its frontmatter sets `model:`.
+- 2026-11-21: Inside the eval sandbox, shell writes to the workspace are read-only (`OSError: Read-only file system`), while the Edit tool works. A reviewer that saved the playbook through Bash lost its lesson → the Chief of Staff now saves playbook edits with Edit only.
+- 2026-11-21: Fixture trap: a scaffold ran the tests, then made an edit of exactly the same byte size in the same second. Python reused the stale `.pyc` and printed OK for broken code, so reviewers in the eval would have seen passing tests → run fixture tests with `PYTHONDONTWRITEBYTECODE=1`.
 
 ## Scheduled tasks
 
@@ -37,3 +42,4 @@ Facts about specific systems that agents learned the hard way. Agents read this 
 ## Brand checks
 
 - 2026-11-19: The brand-check lint flags "#HIC" in the required license line "CT Lic. #HIC.0659657" as an uppercase hashtag → treat that one hit as a false positive. The license rule wins.
+- 2026-11-21: A fixed brand-check skill went to the user's Drive Claude folder for upload. It ships with 88 test drafts, 33 of which the old lint got wrong, including this false positive, the signature's roof-price link and bold links. Until the user uploads it, the old lint is still live, so the note above still applies. The skill holds private details, so it never goes in this public repo.
