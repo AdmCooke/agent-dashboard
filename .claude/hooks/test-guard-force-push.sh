@@ -47,6 +47,9 @@ check allow "$forced" "git push origin agent/x:agent/x"
 check block "$forced" "git push --force-with-lease origin agent/x"
 check block "$root" "cd $forced && git push origin"
 check block "$root" "git -C $forced push"
+plain=$(repo)
+check allow "$root" "git -C $plain push --force-with-lease origin agent/x"
+check block "$root" "git -C /nonexistent/repo push origin agent/x"
 mapped=$(repo); git -C "$mapped" config remote.origin.push refs/heads/agent/x:refs/heads/main
 check block "$mapped" "git push --force-with-lease origin agent/x"
 check allow "$mapped" "git push --force-with-lease origin agent/x:agent/x"
@@ -58,8 +61,15 @@ check block "$mirror" "git push origin"
 pushdefault=$(repo); git -C "$pushdefault" config remote.backup.mirror true; git -C "$pushdefault" config remote.pushDefault backup
 check block "$pushdefault" "git push"
 
+# Input the JSON readers can't decode (a lone surrogate) must fail closed.
+raw='{"cwd":"/tmp","tool_input":{"command":"git push -f origin main \ud800"}}'
+for mode in jq py none; do
+  run $mode "$raw"; got=$(verdict $?)
+  if [ "$got" = block ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL [$mode] unreadable input let through"; fi
+done
+
 # Write and Edit must not change a git config file.
-for f in "$root/.git/config" "$HOME/.gitconfig" "$HOME/.config/git/config"; do
+for f in "$root/.git/config" "$HOME/.gitconfig" "$HOME/.config/git/config" /etc/gitconfig "$root/.git/config.worktree" "$root/.GIT/config" "$root/.git//config" "$root/.git/hooks/pre-push"; do
   json=$(jq -cn --arg f "$f" '{tool_input: {file_path: $f, content: "x"}}')
   run jq "$json"; got=$(verdict $?)
   if [ "$got" = block ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL Write/Edit allowed: $f"; fi

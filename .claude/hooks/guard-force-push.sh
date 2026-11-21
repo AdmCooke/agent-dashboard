@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-# Best-effort tripwire: blocks a git push that force-updates or deletes any branch other than agent/<topic>.
-# It reads the Bash command's text and the repository's git config, and refuses what it can't check:
-# git commands the shell could rewrite ($, backticks, backslashes, braces, wildcards), pushes run with a
-# changed environment, and force pushes whose destination git config could redirect.
-# Known limits: a text check can't follow a push inside a script file, git run under another name, a
-# command built at runtime (sh -c "$C", base64), or tools other than Bash and Write/Edit. GitHub's
+# Tripwire for git pushes that force-update or delete a branch other than agent/<topic>.
+#
+# Design: default-deny. Earlier versions tried to understand any shell text and lost to every review
+# (10, 8, 30 and 29 bypasses). Now any Bash command that could push must be one plain command:
+#   git [-C <dir>] push [<known options>] [<remote> [<refspec>...]] [2>&1 | tail -<n>]
+# with plain characters only. Anything else that could push is blocked. Text that mentions a push
+# (a commit message, a PR body) goes in a file written with the Write tool; searches use the Grep tool.
+# A plain push is then checked against the repository's own git config: where it lands, and whether it
+# forces, deletes or mirrors.
+#
+# Known limits: a push inside a script file or a git hook, a command built at run time without the word
+# push, an interpreter (python3 -c, node -e), and tools other than Bash and Write/Edit. GitHub's
 # protect-main ruleset is the only server-side guarantee, and it covers main only.
 # Every form it must handle is in guard-force-push.cases. Run test-guard-force-push.sh after any change.
 # Bash 3.2 compatible (macOS).
@@ -13,209 +19,175 @@ block() {
   echo "Blocked: $1 Agents may force-push or delete only agent/ branches they created (PLAYBOOK.md)." >&2
   exit 2
 }
+deny() {
+  block "$1 Run the push as one plain command: git push [-u] <remote> <branch>. For a commit message or PR body that mentions a push, write it to a file with the Write tool (git commit -F <file>, gh pr create --body-file <file>). To search, use the Grep tool."
+}
 
-# json_get a.b: print a string field from the hook input, with jq, else python3.
+# json_get a.b: print a string field from the hook input with jq, else python3. Fails if neither can read it.
 json_get() {
   if [ -z "$GUARD_NO_JQ" ] && command -v jq >/dev/null 2>&1; then
-    jq -r ".$1 // empty" <<<"$input" 2>/dev/null; return 0
+    jq -r ".$1 // \"\" | strings" <<<"$input" 2>/dev/null; return $?
   fi
   if [ -z "$GUARD_NO_PY" ] && command -v python3 >/dev/null 2>&1; then
     python3 -c 'import json, sys
 d = json.loads(sys.stdin.read() or "{}")
 for k in sys.argv[1].split("."):
     d = d.get(k) if isinstance(d, dict) else None
-sys.stdout.write(d if isinstance(d, str) else "")' "$1" <<<"$input" 2>/dev/null; return 0
+sys.stdout.write(d if isinstance(d, str) else "")' "$1" <<<"$input" 2>/dev/null; return $?
   fi
   return 1
 }
 
-if ! cmd=$(json_get tool_input.command); then
-  # No JSON reader: block anything that might be a push or a git config write. Install jq to lift this.
-  grep -Eqi "g['\"\\\\]*i['\"\\\\]*t" <<<"$input" || exit 0
-  grep -Eqi 'push|pu['\''"\\]|send-pack|config|\$|`' <<<"$input" &&
-    block "neither jq nor python3 is installed, so this guard can't read the command. Install jq."
+if ! cmd=$(json_get tool_input.command) || ! file=$(json_get tool_input.file_path) || ! curdir=$(json_get cwd); then
+  # The input can't be read, so anything that might touch git is blocked.
+  grep -Eqi "g['\"\\\\]*i['\"\\\\]*t|pu['\"\\\\]*s['\"\\\\]*h|send-pack" <<<"$input" &&
+    block "this guard can't read the command. Install jq (or python3) and try again."
   exit 0
 fi
+[ -n "$curdir" ] || curdir=$PWD
 
-# Write and Edit: block direct edits of git config files, which can force or mirror later pushes.
-file=$(json_get tool_input.file_path)
+# Write and Edit: git config files and git hooks can redirect, force or run a push later.
 if [ -n "$file" ]; then
-  case $file in */.git/config|*/.gitconfig|*/git/config|*.git/config) block "editing $file can change where pushes go. Use git config instead." ;; esac
+  f=$(printf '%s' "$file" | sed -E 's#/+#/#g; s#/(\./)+#/#g' | tr '[:upper:]' '[:lower:]')
+  case $f in
+    */.git/config|*/.git/config.worktree|*/.git/worktrees/*/config*|*/.git/hooks/*|*gitconfig|*/git/config)
+      block "editing $file can change where pushes go or run one. Ask the user to change git config." ;;
+  esac
+  exit 0
+fi
+[ -n "$cmd" ] || exit 0
+
+# Normalized text for the tripwires: quotes, backslashes and brackets removed, lowercase.
+norm=$(printf '%s' "$cmd" | tr -d "'\"\\\\[]{}" | tr '[:upper:]' '[:lower:]')
+norm=${norm//stash push/stash}
+push_re='(^|[^a-z])(push|send-pack|remote-https?|remote-ext|remote-fd)([^a-z]|$)'
+risky_re='alias\.|autocorrect|include\.path|includeif|config-env|remote\.[^[:space:]]*\.(push|mirror)([^a-z]|$)|pushdefault|pushremote|recursesubmodules'
+git_re='(^|[^a-z0-9_])git([^a-z0-9_]|$)|git-'
+
+# GitHub's API can move or delete a branch without git.
+if [[ $norm =~ gh[[:space:]]+api ]] && [[ $norm == *git/refs* ]] &&
+   [[ $norm =~ (-x|--method)[[:space:]]*(patch|delete|post|put)|force ]]; then
+  block "this changes a branch through the GitHub API."
+fi
+
+could_push=0
+if [[ $norm =~ $push_re || $norm =~ $risky_re ]] && [[ $norm =~ $git_re || $cmd == *'$'* || $cmd == *'`'* ]]; then
+  could_push=1
+fi
+
+if [ $could_push = 0 ]; then
+  # Not push-shaped. Still check each git word: an alias or autocorrect can turn it into a push, and some
+  # subcommands run other commands, which must not be built at run time.
+  known=' add am annotate apply archive bisect blame branch bundle cat-file check-attr check-ignore check-mailmap check-ref-format checkout checkout-index cherry cherry-pick clean clone column commit commit-graph commit-tree config count-objects credential describe diff diff-files diff-index diff-tree difftool fetch fetch-pack for-each-ref format-patch fsck gc grep hash-object help hook index-pack init interpret-trailers log ls-files ls-remote ls-tree maintenance merge merge-base merge-file merge-tree mergetool mktag mktree mv notes pack-objects pack-refs prune pull range-diff read-tree rebase reflog remote repack replace rerere reset restore rev-list rev-parse revert rm shortlog show show-branch show-ref sparse-checkout stash status stripspace submodule switch symbolic-ref tag update-index update-ref var verify-commit verify-tag version whatchanged worktree write-tree lfs '
+  line=$cmd; line=${line//&&/$'\n'}; line=${line//||/$'\n'}; line=${line//;/$'\n'}; line=${line//|/$'\n'}
+  while IFS= read -r seg; do
+    seg=${seg//[\"\']/}
+    read -ra w <<<"$seg"
+    n=${#w[@]}; i=0
+    while [ $i -lt $n ]; do
+      t=${w[$i]}; t=${t#\\}
+      if [ "${t##*/}" = git ]; then
+        j=$((i + 1))
+        while [ $j -lt $n ]; do
+          case ${w[$j]} in
+            *'$'*|*'`'*) block "git's options here are built at run time, so the guard can't check them." ;;
+            -C|-c|--git-dir|--work-tree|--namespace|--super-prefix|--exec-path) j=$((j + 2)) ;;
+            -*) j=$((j + 1)) ;;
+            *) break ;;
+          esac
+        done
+        sub=${w[$j]}
+        [ -n "$sub" ] || break
+        case $sub in *[\$\`\\\*\?\[\]\{\}]*) block "the shell picks this git command at run time, so it can't be checked." ;; esac
+        case $sub in rebase|submodule|bisect|difftool|mergetool|filter-branch|worktree)
+          [[ $cmd == *'$'* || $cmd == *'`'* ]] && block "git $sub runs other commands, and this one is built at run time." ;;
+        esac
+        if [[ $known != *" $sub "* ]]; then
+          a=$(git -C "$curdir" config --get "alias.$sub" 2>/dev/null)
+          case $a in *push*|*send-pack*|'!'*) block "git $sub is an alias that pushes or runs a shell command." ;; esac
+          if [ -z "$a" ]; then
+            ac=$(git -C "$curdir" config --get help.autocorrect 2>/dev/null)
+            case $ac in ''|0|false|never|show) ;; *) block "git $sub is not a git command, and autocorrect could run a push." ;; esac
+          fi
+        fi
+        break
+      fi
+      i=$((i + 1))
+    done
+  done <<<"$line"
   exit 0
 fi
 
-curdir=$(json_get cwd); [ -n "$curdir" ] || curdir=$PWD
-config_re='remote\.[^[:space:]=]*\.(push|mirror)([[:space:]=]|$)'   # git config keys ignore case
-alias_re='alias\.'
-meta_re='[][$`\\{}*?]'
+# Push-shaped. A few exact shapes that can't push are fine: a single git commit with a single-quoted
+# message, and reading or unsetting git config.
+commit_re="^[[:space:]]*git[[:space:]]+commit([[:space:]]+(--allow-empty|--amend|--no-verify|-[aqvs]+))*[[:space:]]+-m[[:space:]]+'[^']*'[[:space:]]*\$"
+config_re='^[[:space:]]*git[[:space:]]+config[[:space:]]+(--global[[:space:]]+)?(--get|--get-all|--get-regexp|--list|-l|--unset|--unset-all)([[:space:]]+[A-Za-z0-9._-]+)?[[:space:]]*$'
+[[ $cmd =~ $commit_re ]] && exit 0
+[[ $cmd =~ $config_re ]] && exit 0
 
-# Writing a git config file through a redirection or tee can force or mirror the next push.
-cfgfile_re='(>>?|tee([[:space:]]+-a)?)[[:space:]]*["'\'']?[^[:space:];&|]*(\.git/config|\.gitconfig|/git/config)'
-[[ $cmd =~ $cfgfile_re ]] && block "this writes a git config file directly."
+# Everything else must be one plain push.
+c=$cmd
+c=$(printf '%s' "$c" | sed -E 's/[[:space:]]+$//')
+case $c in *$'\n'*) deny "this push spans more than one line." ;; esac
+c=$(printf '%s' "$c" | sed -E 's/[[:space:]]+(2>&1|2>\/dev\/null|>\/dev\/null[[:space:]]+2>&1)([[:space:]]*\|[[:space:]]*(tail|head)([[:space:]]+-n)?[[:space:]]+-?[0-9]+)?$//')
+# A whole word in quotes, made of plain characters, means the same without them.
+c=$(printf '%s' "$c" | sed -E "s/\"([A-Za-z0-9._\/:@+=^-]+)\"/\\1/g; s/'([A-Za-z0-9._\/:@+=^-]+)'/\\1/g")
+[[ $c =~ ^[A-Za-z0-9[:space:]._/:@+=^-]+$ ]] || deny "this command could push in a way the guard can't check."
+read -ra w <<<"$c"
+n=${#w[@]}; i=1; dir=
+[ "${w[0]}" = git ] || deny "this command could push in a way the guard can't check."
+if [ "${w[1]}" = -C ]; then dir=${w[2]}; i=3; fi
+[ "${w[$i]}" = push ] || deny "this command could push in a way the guard can't check."
+i=$((i + 1))
 
-# Drop the bodies of quoted heredocs whose line starts with cat, git ... commit, or gh pr/issue: that
-# text is data and never runs. Everything else keeps its body: an unquoted heredoc expands $(...), and
-# bash -c "$(cat <<'EOF' ...)", x=$(cat ...), eval or a pipe would run it.
-hd_re="<<-?[[:space:]]*['\"\\\\]([A-Za-z_][A-Za-z0-9_]*)"
-data_re='^[[:space:]]*(cat[[:space:]]|git[[:space:]](.*[[:space:]])?commit[[:space:]]|gh[[:space:]]+(pr|issue)[[:space:]])'
-out=; skip=
-while IFS= read -r line || [ -n "$line" ]; do
-  if [ -n "$skip" ]; then
-    t=${line#"${line%%[!$'\t']*}"}
-    [ "$t" = "$skip" ] && skip=
-    continue
-  fi
-  out=$out$line$'\n'
-  if [[ $line != *'|'* ]] && [[ $line =~ $data_re ]] && [[ $line =~ $hd_re ]]; then
-    case $line in *bash*|*' sh '*|*eval*|*source*|*exec*) ;; *) skip=${BASH_REMATCH[1]} ;; esac
-  fi
-done <<<"$cmd"
-cmd=$out
-
-# Join backslash-continued lines, then one simple command per line: split on newlines, ;, &&, || and |.
-# 2>&1 and &> are redirections, not splits.
-cmd=${cmd//$'\\\n'/ }
-cmd=${cmd//>&/>}; cmd=${cmd//&>/>}
-cmd=${cmd//&&/$'\n'}; cmd=${cmd//||/$'\n'}
-cmd=${cmd//;/$'\n'}; cmd=${cmd//|/$'\n'}; cmd=${cmd//&/$'\n'}
-
-# dst_ok REF: true when REF lands on an agent/ branch.
-dst_ok() { local d=${1#+}; d=${d##*:}; d=${d#refs/heads/}; [[ $d == agent/?* ]]; }
-# prefix NAME FULL MIN: git accepts any unambiguous prefix of a long option.
-prefix() { [ ${#1} -ge "$3" ] && [ "${2#"$1"}" != "$2" ]; }
-# cfg ARGS: read effective git config for the repository the push runs in.
-cfg() { git "${gitloc[@]}" config "$@" 2>/dev/null; }
-
-envchanged=0
-while IFS= read -r raw; do
-  # A comment ends the command. Only look for one in a segment without quotes.
-  case $raw in *[\"\']*) ;; '#'*|*' #'*) raw=${raw%%#*} ;; esac
-  seg=${raw//[\"\']/}           # the shell joins quoted pieces: pu''sh is push
-  seg=${seg//[()\`]/ }
-  read -ra w <<<"$seg"
-  n=${#w[@]}
-  [ $n -gt 0 ] || continue
-
-  # Track cd, so git config is read from the repository the push runs in.
-  if [ "${w[0]}" = cd ] || [ "${w[0]}" = pushd ]; then
-    case ${w[1]} in /*) curdir=${w[1]} ;; '') ;; *) curdir=$curdir/${w[1]} ;; esac
-    continue
-  fi
-  # A command that only sets or exports git's environment affects the pushes after it.
-  case ${w[0]} in export|GIT_*=*|HOME=*|XDG_CONFIG_HOME=*)
-    [[ $seg == *GIT_* || $seg == *HOME=* ]] && envchanged=1 ;;
+force=0; del=0; remote=; refs=()
+while [ $i -lt $n ]; do
+  a=${w[$i]}
+  case $a in
+    -u|--set-upstream|-q|--quiet|-v|--verbose|-n|--dry-run|--porcelain|--no-verify|--verify|--follow-tags|--no-follow-tags|--atomic|--no-atomic|--progress|--no-progress|-4|-6|--ipv4|--ipv6|--signed|--no-signed|--signed=*|--push-option=*) ;;
+    -o) i=$((i + 1)) ;;
+    --force|--force-with-lease|--force-with-lease=*|--force-if-includes|--no-force-if-includes) force=1 ;;
+    --delete) del=1 ;;
+    --*) deny "git push $a is not an option this guard allows." ;;
+    -*) [[ $a =~ ^-[uqvnf46d]+$ ]] || deny "git push $a is not an option this guard allows."
+        [[ $a == *f* ]] && force=1; [[ $a == *d* ]] && del=1 ;;
+    *) if [ -z "$remote" ]; then remote=$a; else refs+=("$a"); fi ;;
   esac
+  i=$((i + 1))
+done
 
-  # Find git, git-push, or a variable standing in for git, and its subcommand.
-  sub=; cfgflag=; hasc=0; cdir=; gdir=; pre=; i=0; gi=-1; j=0
-  while [ $i -lt $n ]; do
-    t=${w[$i]}; t=${t#\\}; base=${t##*/}
-    case $base in
-      git-push) sub=push; gi=$i; j=$((i + 1)); break ;;
-      git-send-pack) block "git send-pack pushes refs directly." ;;
-    esac
-    if [ "$base" = git ] || { [[ $t == *'$'* ]] && [ "${w[$((i + 1))]}" = push ]; }; then
-      gi=$i; j=$((i + 1))
-      while [ $j -lt $n ]; do
-        case ${w[$j]} in
-          -C) cdir=${w[$((j + 1))]}; j=$((j + 2)) ;;
-          --git-dir) gdir=${w[$((j + 1))]}; j=$((j + 2)) ;;
-          --git-dir=*) gdir=${w[$j]#--git-dir=}; j=$((j + 1)) ;;
-          -c) hasc=1; j=$((j + 2)) ;;
-          -c*) hasc=1; j=$((j + 1)) ;;
-          --work-tree|--namespace|--config-env|--super-prefix|--shallow-file|--attr-source) j=$((j + 2)) ;;
-          -*) # An unknown option may take an argument: if push follows that, take it.
-              if [ "${w[$((j + 2))]}" = push ] && [[ ${w[$((j + 1))]} != -* ]]; then j=$((j + 2)); else j=$((j + 1)); fi ;;
-          *) break ;;
-        esac
-      done
-      sub=${w[$j]}
-      [ "$sub" = config ] && cfgflag=${w[$((j + 1))]}
-      j=$((j + 1))
-      break
-    fi
-    pre="$pre ${w[$i]}"
-    i=$((i + 1))
-  done
+# Read the config of the repository this push runs in. If it can't be read, block.
+repo=$curdir
+if [ -n "$dir" ]; then case $dir in /*) repo=$dir ;; *) repo=$curdir/$dir ;; esac; fi
+git -C "$repo" rev-parse --git-dir >/dev/null 2>&1 || block "the guard can't read the git config of '$repo'."
+cfg() { git -C "$repo" config "$@" 2>/dev/null; }
+r=$remote
+if [ -z "$r" ]; then
+  b=$(git -C "$repo" symbolic-ref --short -q HEAD 2>/dev/null)
+  r=$(cfg --get "branch.$b.pushRemote"); [ -n "$r" ] || r=$(cfg --get remote.pushDefault)
+  [ -n "$r" ] || r=$(cfg --get "branch.$b.remote"); [ -n "$r" ] || r=origin
+fi
+[ "$(cfg --type=bool --get "remote.$r.mirror")" = true ] && block "remote '$r' is set to mirror, which can overwrite every branch."
+cfgrefs=()
+while IFS= read -r spec; do [ -n "$spec" ] && cfgrefs+=("$spec"); done < <(cfg --get-all "remote.$r.push")
+# A branch named without a colon can be sent elsewhere by remote.*.push or push.default=upstream/tracking.
+remap=0
+[ ${#cfgrefs[@]} -gt 0 ] && remap=1
+case $(cfg --get push.default) in upstream|tracking) remap=1 ;; esac
+case $(cfg --get push.recurseSubmodules) in on-demand|only) [ $force = 1 ] && block "push.recurseSubmodules would force-push submodules too." ;; esac
+[ ${#refs[@]} -eq 0 ] && [ $del = 0 ] && refs=("${cfgrefs[@]}")
 
-  # Git config writes that set a push refspec, a mirror, or a pushing alias are pushes in disguise.
-  # Reading or unsetting them with git config is fine.
-  case $cfgflag in --get*|--list|-l|--unset*|--remove-section) readonly=1 ;; *) readonly=0 ;; esac
-  if [ "$sub" != config ] || [ $hasc = 1 ] || [ $readonly = 0 ]; then
-    shopt -s nocasematch
-    [[ $seg =~ $config_re ]] && block "this sets a push refspec or mirror in git config."
-    [[ $seg =~ $alias_re ]] && [[ $seg == *push* ]] && block "this defines a git alias that pushes."
-    shopt -u nocasematch
+dst_ok() { local d=${1#+}; d=${d##*:}; d=${d#refs/heads/}; [[ $d == agent/?* ]]; }
+for x in "${refs[@]}"; do
+  [[ $x == +* ]] && force=1
+  if [[ $x == :* ]] || [ $del = 1 ]; then dst_ok "$x" || block "this deletes '${x#:}'."; fi
+done
+[ $force = 1 ] || exit 0
+[ ${#refs[@]} -eq 0 ] && block "this force push names no branch, so where it lands depends on the checkout and config. Name the agent/ branch explicitly."
+for x in "${refs[@]}"; do
+  if [[ $x != *:* ]] && [ $remap = 1 ]; then
+    block "git config here could send '$x' to another branch. Write the destination out, for example $x:$x."
   fi
-  [ $gi -ge 0 ] || continue
-
-  if [[ $seg == *--mi* ]]; then
-    for a in "${w[@]}"; do prefix "${a%%=*}" --mirror 4 && block "--mirror can overwrite every branch on the remote."; done
-  fi
-  [[ $sub =~ $meta_re ]] && block "the shell picks this git command at run time, so it can't be checked. Write it out plainly."
-  case $sub in send-pack) block "git send-pack pushes refs directly." ;; push) ;; *) continue ;; esac
-
-  # From here on it is a push.
-  [[ $raw =~ $meta_re ]] && block "this push uses \$, backticks, backslashes, braces or wildcards, so the shell could turn it into a force push. Write the command out plainly."
-  case " $pre " in *' env '*|*' xargs '*) block "this push runs through env or xargs, which can change its arguments or environment." ;; esac
-  [[ $pre == *GIT_* || $pre == *HOME=* || $pre == *XDG_CONFIG_HOME=* ]] && block "this push changes git's environment, so its config and destination can't be checked."
-  [ $envchanged = 1 ] && block "an earlier part of this command changes git's environment, so this push can't be checked."
-
-  force=0; del=0; many=0; prune=0; remote=; refs=()
-  while [ $j -lt $n ]; do
-    a=${w[$j]}
-    case $a in
-      -o|--push-option|--repo|--receive-pack|--exec) j=$((j + 1)) ;;
-      [0-9]'>'*|'>'*|[0-9]'<'*|'<'*)
-        case $a in
-          *:*) refs+=("$a") ;;                      # a quoted '>:main' is a refspec, not a redirection
-          *'>'|*'<') j=$((j + 1)) ;;                 # the operator alone: skip its file too
-        esac ;;
-      --*) o=${a%%=*}
-        if prefix "$o" --force 4 || prefix "$o" --force-with-lease 4 || prefix "$o" --force-if-includes 4; then force=1
-        elif prefix "$o" --delete 4; then del=1
-        elif prefix "$o" --prune 5; then prune=1
-        elif prefix "$o" --all 4 || prefix "$o" --branches 4 || prefix "$o" --tags 4; then many=1
-        fi ;;
-      -*) [[ $a == *f* ]] && force=1; [[ $a == *d* ]] && del=1 ;;
-      *) if [ -z "$remote" ]; then remote=$a; else refs+=("$a"); fi ;;
-    esac
-    j=$((j + 1))
-  done
-  [ $prune = 1 ] && block "--prune deletes remote branches."
-
-  # Read the config that decides where this push goes.
-  repo=$curdir
-  if [ -n "$cdir" ]; then case $cdir in /*) repo=$cdir ;; *) repo=$curdir/$cdir ;; esac; fi
-  gitloc=(-C "$repo"); [ -n "$gdir" ] && gitloc=(-C "$repo" --git-dir="$gdir")
-  r=$remote
-  if [ -z "$r" ]; then
-    b=$(git "${gitloc[@]}" symbolic-ref --short -q HEAD 2>/dev/null)
-    r=$(cfg --get "branch.$b.pushRemote"); [ -n "$r" ] || r=$(cfg --get remote.pushDefault)
-    [ -n "$r" ] || r=$(cfg --get "branch.$b.remote"); [ -n "$r" ] || r=origin
-  fi
-  [ "$(cfg --get "remote.$r.mirror")" = true ] && block "remote '$r' is set to mirror, which can overwrite every branch."
-  cfgrefs=()
-  while IFS= read -r spec; do [ -n "$spec" ] && cfgrefs+=("$spec"); done < <(cfg --get-all "remote.$r.push")
-  # Named refs without a colon get remapped by remote.*.push, or by push.default=upstream/tracking.
-  remap=0
-  [ ${#cfgrefs[@]} -gt 0 ] && remap=1
-  case $(cfg --get push.default) in upstream|tracking) remap=1 ;; esac
-  shopt -s nocasematch; [[ $seg =~ push\.default=(upstream|tracking) ]] && remap=1; shopt -u nocasematch
-  [ ${#refs[@]} -eq 0 ] && [ $del = 0 ] && refs=("${cfgrefs[@]}")
-
-  for x in "${refs[@]}"; do
-    [[ $x == +* ]] && force=1
-    if [[ $x == :* ]] || [ $del = 1 ]; then dst_ok "$x" || block "this deletes '${x#:}'."; fi
-  done
-  [ $force = 1 ] || continue
-  [ $many = 1 ] && block "a force push with --all, --branches or --tags reaches branches other than agent/."
-  [ ${#refs[@]} -eq 0 ] && block "this force push names no branch, so where it lands depends on the checkout and config. Name the agent/ branch explicitly."
-  for x in "${refs[@]}"; do
-    if [[ $x != *:* ]] && [ $remap = 1 ]; then
-      block "git config here could send '$x' to another branch. Write the destination out, for example $x:$x."
-    fi
-    dst_ok "$x" || { d=${x#+}; d=${d##*:}; block "force push to '${d#refs/heads/}'."; }
-  done
-done <<<"$cmd"
+  dst_ok "$x" || { d=${x#+}; d=${d##*:}; block "force push to '${d#refs/heads/}'."; }
+done
 exit 0
