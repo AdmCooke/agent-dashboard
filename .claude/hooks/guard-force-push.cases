@@ -68,6 +68,41 @@ block	git remote add --mirror=push backup ../backup.git
 block	git push origin --delete premier-sales-agent
 block	git push origin :premier-sales-agent
 block	git push -d origin main
+# Independent review, 2026-11-21: quotes the shell joins, option prefixes, other entry points
+block	git pu''sh -f origin main
+block	g''it push -f origin main
+block	git pu\sh -f origin main
+block	P=push; git $P -f origin main
+block	git {push,} -f origin main
+block	git push origin main -''f
+block	git push origin --del''ete premier-sales-agent
+block	git push origin --del premier-sales-agent
+block	git push --mirr origin
+block	git push --force-w origin main
+block	git push --all --prune origin
+block	git -c push.default=upstream push --force-with-lease origin agent/topic
+block	git -c "remote.origin.push"=+HEAD:refs/heads/main push origin
+block	git config 'remote.origin.push' '+HEAD:refs/heads/main'; git push origin
+block	git -c remote.origin.push=+HEAD:refs/heads/main -c x.y=--get push origin
+block	git -c alias.p=pu''sh p -f origin main
+block	git --shallow-file nofile push -f origin main
+block	git --attr-source HEAD push -f origin main
+block	/usr/lib/git-core/git-push -f origin main
+block	git send-pack --force ../bare.git main
+block	echo -f | xargs git push origin main
+block	g() { git "$@"; }; g push -f origin main
+block	GIT_DIR=../other/.git git push origin
+block	HOME=/tmp/fakehome git push origin
+block	env -C ../other git push origin
+block	export GIT_DIR=../other/.git; git push origin
+block	printf '[remote "origin"]\n\tpush = +HEAD:refs/heads/main\n' >> .git/config; git push origin
+block	git remote add --mirr=push backup ../bare.git
+block	git push --force-with-lease origin agent/x ">:main"
+# A heredoc body that runs as code must still be read
+block	bash -c "$(cat <<'EOF'<NL>git push -f origin main<NL>EOF<NL>)"
+block	x=$(cat <<'EOF'<NL>git push -f origin main<NL>EOF<NL>); bash -c "$x"
+block	cat <<'EOF' | bash<NL>git push -f origin main<NL>EOF
+block	cat <<EOF<NL>$(git push -f origin main)<NL>EOF
 # Output redirection must not hide or invent a destination
 block	git push -f origin main 2>&1 | tail -2
 block	git push -f origin main > /tmp/push.log
@@ -96,3 +131,12 @@ allow	git push origin :agent/old-topic
 allow	git config --get remote.origin.push
 allow	git config remote.origin.pushurl https://example.invalid/x.git
 allow	cd /tmp && git status
+allow	git -c push.default=current push --force-with-lease origin agent/x
+allow	git push --force-with-lease origin agent/x  # rewrite my own branch
+allow	git config --unset remote.origin.push
+allow	git config push.default upstream
+allow	git commit -m "$(cat <<'EOF'<NL>Document how to publish a branch<NL><NL>Run `git push -u origin agent/topic` once the tests pass.<NL>EOF<NL>)"
+allow	cp $SRC $DST && bash $DIR/run.sh $DIR/list.tsv
+allow	git log --oneline -5 && git status --short
+allow	head -3 .git/config 2>&1 | tail -2
+block	echo push = +HEAD:refs/heads/main | tee -a .git/config
