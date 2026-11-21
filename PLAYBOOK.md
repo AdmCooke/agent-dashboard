@@ -45,8 +45,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-19 (main): Remote branches can't be deleted from a cloud session: `git push origin --delete <branch>` gets a 403 from the git proxy, `gh api -X DELETE .../git/refs/heads/<branch>` is refused as a write path, and the GitHub MCP has no delete-branch tool → hand the user the `git push origin --delete` commands to run locally, or point them to the branch list on github.com.
 
 - 2026-11-19 (main): Deny rules with a `:` in them (`Bash(... origin agent/*:*)`) matched nothing in fresh-session tests, while the same push was allowed → permission patterns can't guard `src:dst` refspecs; use a PreToolUse hook and test it.
-- 2026-11-19 (main): `gh api -X PATCH repos/...` to change a repo setting (auto-delete merged branches) was blocked by auto mode as destructive → give the user the setting to change on github.com.- 2026-11-21 (main): The premier-sales-agent branch held two customer email addresses in this public repo, and its daily-run file had drifted far from the live Sales Daily task, which runs from its own prompt with no plugins → scan text for customer names and email addresses before you push, and read a task's live prompt with list_triggers instead of trusting a repo copy. Each list_triggers page is large because it lists every connector, so stop paging once you find the task.
-
+- 2026-11-19 (main): `gh api -X PATCH repos/...` to change a repo setting (auto-delete merged branches) was blocked by auto mode as destructive → give the user the setting to change on github.com.
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
 ## Open questions for the user
