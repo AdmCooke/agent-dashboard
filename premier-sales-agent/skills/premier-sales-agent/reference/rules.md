@@ -16,8 +16,11 @@ When unsure, list the lead under "check by hand" instead of guessing.
 Same email or same phone = same person. Keep the newest record that has the
 most fields filled in. Propose the others as Junk Lead with reason "duplicate of <id>".
 
-## Closed statuses
-Lost Lead, Junk Lead and "Not Inerested" (spelled that way in Zoho) are closed. Never list or draft to them.
+## Lead statuses
+Open: New, Attempted, Attempted to Contact, Return, Contacted, Working. Zoho keeps
+both labels for some statuses, so filter on the full list.
+Closed: Lost Lead, Junk Lead, DONT USE 2, "Not Inerested" (spelled that way in Zoho),
+unqualified, Not Qualified, DO NOT CALL and Cold. Never list or draft to a closed lead.
 
 ## Lost
 Any reply saying no thanks, not interested, already went with someone, or stop
@@ -29,7 +32,7 @@ If nothing went out in Gmail within 2 business days of Created_Time, the promise
 
 ## Installed base (new leads from past customers)
 Past solar customers are the best new-lead source: production check-ins
-("Your Solar Results", "beating its estimate") and roof, windows, siding, and heat pump cross-sells.
+("Your Solar Results", "beating its estimate") and roof, windows, siding, and battery storage cross-sells.
 Only quote production numbers from tracker data Adam provides.
 
 ## Follow_up field
