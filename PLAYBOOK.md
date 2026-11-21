@@ -47,6 +47,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-19 (main): Deny rules with a `:` in them (`Bash(... origin agent/*:*)`) matched nothing in fresh-session tests, while the same push was allowed → permission patterns can't guard `src:dst` refspecs; use a PreToolUse hook and test it.
 - 2026-11-19 (main): `gh api -X PATCH repos/...` to change a repo setting (auto-delete merged branches) was blocked by auto mode as destructive → give the user the setting to change on github.com.
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
+- 2026-11-21 (main): After a squash merge, reusing the session's `claude/` branch for a follow-up needed a force push, which the force-push hook blocks → `git fetch origin <branch> && git merge --no-edit FETCH_HEAD` (the old commits match main, so the merge adds no file changes), then push normally.
 
 ## Open questions for the user
 

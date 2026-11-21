@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Bookmarks</title>
+  <style>
+    :root { --bg: #ffffff; --fg: #1f1f1f; --muted: #5f6368; --line: #e3e3e3; color-scheme: light; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #2b2c2f; --fg: #e3e3e3; --muted: #a8abb0; --line: #3c3d40; color-scheme: dark; }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      width: 760px; min-height: 300px; display: flex; flex-direction: column;
+      background: var(--bg); color: var(--fg); font: 12px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    #bar { display: block; flex: none; }
+    main { flex: 1; }
+    footer { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-top: 1px solid var(--line); color: var(--muted); }
+    footer button { font: inherit; font-weight: 600; color: var(--fg); background: none; border: 0; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+    footer button:hover { background: rgba(127,127,127,.15); }
+  </style>
+</head>
+<body>
+  <div id="bar"></div>
+  <main></main>
+  <footer>
+    <span>Click to open. Right-click to edit or delete. Drag to reorder.</span>
+    <button id="settings" type="button">Settings</button>
+  </footer>
+  <script src="data.js"></script>
+  <script src="bar.js"></script>
+  <script src="ext-page.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

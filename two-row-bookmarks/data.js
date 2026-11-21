@@ -6,12 +6,14 @@ const TRB_DEFAULTS = {
   rows: 2, // 1 or 2
   labels: 'full', // 'full' | 'short' | 'icons'
   everyPage: false,
+  pageMode: 'reveal', // on websites: 'reveal' slides down from the top edge, 'pinned' pushes the page down
   exclude: ''
 };
 
 async function trbSettings() {
   const s = await chrome.storage.sync.get(TRB_DEFAULTS);
   s.rows = Number(s.rows) === 1 ? 1 : 2;
+  if (s.pageMode !== 'pinned') s.pageMode = 'reveal';
   return s;
 }
 

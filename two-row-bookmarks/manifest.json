@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Two Row Bookmarks",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Your bookmarks in two clean rows, on the New Tab page and, if you turn it on, at the top of every site.",
   "icons": {
     "16": "icons/icon16.png",
@@ -14,7 +14,7 @@
   "background": { "service_worker": "background.js" },
   "chrome_url_overrides": { "newtab": "newtab.html" },
   "options_page": "options.html",
-  "action": { "default_title": "Two Row Bookmarks settings" },
+  "action": { "default_title": "Bookmarks", "default_popup": "popup.html" },
   "commands": {
     "toggle-bar": {
       "suggested_key": { "default": "Alt+Shift+2" },

@@ -64,11 +64,19 @@ async function init() {
 
   const every = $('everyPage');
   every.checked = s.everyPage && allowed;
+  const dimModes = () => $('pageModes').classList.toggle('off', !every.checked);
+  dimModes();
+  document.querySelectorAll('input[name=pageMode]').forEach((r) => {
+    r.checked = r.value === s.pageMode;
+    r.addEventListener('change', () => save({ pageMode: r.value }));
+  });
   every.addEventListener('change', async () => {
+    dimModes();
     if (every.checked) {
       const ok = await chrome.permissions.request(ALL_SITES);
       if (!ok) {
         every.checked = false;
+        dimModes();
         return;
       }
       save({ everyPage: true });
