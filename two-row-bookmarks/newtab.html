@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Tab</title>
+  <style>
+    :root { --bg: #f8f9fa; --fg: #1f1f1f; --muted: #5f6368; --field: #ffffff; --line: #dadce0; --focus: #0b57d0; color-scheme: light; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1f2023; --fg: #e3e3e3; --muted: #a8abb0; --field: #2f3033; --line: #46474b; --focus: #a8c7fa; color-scheme: dark; }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; display: flex; flex-direction: column; }
+    #bar { display: block; flex: none; }
+    main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 22vh 16px 0; }
+    form { width: min(584px, 100%); }
+    input {
+      width: 100%; height: 48px; padding: 0 22px; font: inherit; font-size: 16px; color: inherit;
+      background: var(--field); border: 1px solid var(--line); border-radius: 24px; outline: none;
+    }
+    input:focus { border-color: var(--focus); }
+    footer { flex: none; display: flex; justify-content: flex-end; padding: 12px 16px; }
+    footer button { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 6px 8px; border-radius: 6px; }
+    footer button:hover { color: var(--fg); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="bar"></div>
+  <main>
+    <form id="search" role="search">
+      <input id="q" type="search" placeholder="Search the web" aria-label="Search the web" autocomplete="off" autofocus>
+    </form>
+  </main>
+  <footer><button id="settings" type="button">Bookmark row settings</button></footer>
+  <script src="data.js"></script>
+  <script src="bar.js"></script>
+  <script src="newtab.js"></script>
+</body>
+</html>
