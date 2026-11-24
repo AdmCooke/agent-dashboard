@@ -44,6 +44,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-21 (chief-of-staff): Edits to `PLAYBOOK.md` don't reach agents launched later in the same session. A playbook change applies from the next session. Measure it in a fresh `claude -p` run.
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
+- 2026-11-24 (main): A Bash call that only wrote files with several `cat > file <<'EOF'` heredocs was blocked as a possible dangerous removal, and a session scoped to one repo has no safe way to create a new GitHub repo → write files with the Write tool, and when a task names a repo that doesn't exist, build outside this public checkout, hand the user the files, and ask them to create the repo.
 ## Open questions for the user
 
 - None.
