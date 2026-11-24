@@ -42,7 +42,7 @@ sys.stdout.write(d if isinstance(d, str) else "")' "$1" <<<"$input" 2>/dev/null;
 
 if ! cmd=$(json_get tool_input.command) || ! file=$(json_get tool_input.file_path) || ! curdir=$(json_get cwd); then
   # The input can't be read, so anything that might touch git is blocked.
-  grep -Eqi "g['\"\\\\]*i['\"\\\\]*t|pu['\"\\\\]*s['\"\\\\]*h|send-pack|gh[[:space:]]+api|deleteref|updateref" <<<"$input" &&
+  grep -Eqi "g['\"\\\\]*i['\"\\\\]*t|pu['\"\\\\]*s['\"\\\\]*h|send-pack|gh[[:space:]]+api|deleteref|updateref|\\{[^}]*(,|\\.\\.)[^}]*\\}" <<<"$input" &&
     block "this guard can't read the command. Install jq (or python3) and try again."
   exit 0
 fi
@@ -106,7 +106,23 @@ is_git_prog() {   # is_git_prog WORD: true when WORD runs git (a path, a symlink
   case ${real##*/} in git|git-*) return 0 ;; esac
   return 1
 }
-segs=$cmd; segs=${segs//&&/$'\n'}; segs=${segs//||/$'\n'}; segs=${segs//;/$'\n'}; segs=${segs//|/$'\n'}; segs=${segs//&/$'\n'}
+# One simple command per line, split on ; | & and newlines outside quotes, so a quoted jq or awk program
+# stays one argument. Backslash-newline joins lines, and 2>&1 or &> is a redirection, not a split.
+segs=${cmd//>&/>}; segs=${segs//&>/>}
+segs=$(printf '%s\n' "$segs" | awk '
+  { line = $0 "\n"; n = length(line)
+    for (i = 1; i <= n; i++) {
+      c = substr(line, i, 1)
+      if (esc) { esc = 0; if (c != "\n") seg = seg c; continue }
+      if (sq) { if (c == "\047") sq = 0; seg = seg (c == "\n" ? " " : c); continue }
+      if (c == "\\") { if (substr(line, i + 1, 1) != "\n") seg = seg c; esc = 1; continue }
+      if (dq) { if (c == "\"") dq = 0; seg = seg (c == "\n" ? " " : c); continue }
+      if (c == "\047") { sq = 1; seg = seg c; continue }
+      if (c == "\"") { dq = 1; seg = seg c; continue }
+      if (c == ";" || c == "|" || c == "&" || c == "\n") { print seg; seg = ""; continue }
+      seg = seg c
+    } }
+  END { if (seg != "") print seg }')
 while IFS= read -r seg; do
   s=${seg//[\"\']/}
   read -ra w <<<"$s"
@@ -150,7 +166,15 @@ while IFS= read -r seg; do
   case $prog in *'$'*|*'`'*)
     [ $has_git = 1 ] || [ $could_push = 1 ] && deny "the program this runs is built by the shell at run time, so the guard can't check it." ;;
   esac
-  case $prog in *'{'*|*'}'*) deny "the program this runs comes from brace expansion, so the guard can't check it." ;; esac
+  # Brace expansion: a sequence like {g..g}it is refused, and each alternative of {a,b} is resolved.
+  case $prog in *'{'*'..'*'}'*) deny "the program this runs comes from brace expansion, so the guard can't check it." ;; esac
+  case $prog in *'{'*','*'}'*)
+    bpre=${prog%%\{*}; brest=${prog#*\{}; bgroup=${brest%%\}*}; bpost=${brest#*\}}
+    IFS=, read -ra balts <<<"$bgroup,"
+    for balt in "${balts[@]}" ""; do
+      is_git_prog "$bpre$balt$bpost" && deny "this brace expansion runs git, so the guard can't check it."
+    done ;;
+  esac
   case $prog in *'*'*|*'?'*|*'['*)
     hit=
     while IFS= read -r g; do is_git_prog "$g" && hit=1; done < <(cd "$curdir" 2>/dev/null && compgen -G "$prog")

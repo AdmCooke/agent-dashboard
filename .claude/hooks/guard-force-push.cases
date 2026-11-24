@@ -166,6 +166,11 @@ allow	git add .claude/hooks/guard-force-push.sh .claude/hooks/guard-force-push.c
 allow	git checkout -b agent/fix-push-guard origin/main
 allow	git commit -qm 'Explain the push guard'
 allow	docker push example/image:latest
+# Quoted text with | ; & inside it is not a command (a jq or awk program)
+allow	jq -r '.items[] | {name: .n, id: .i} | select(.id > 3)' data.json && git status
+allow	awk -F, '{ print $1; print $2 }' list.csv | sort | git hash-object --stdin
+block	{gi,x}t q -f origin main
+block	{g..g}it q -f origin main
 
 # v6: push.default is read at push time, so changing it is fine.
 allow	git config push.default upstream

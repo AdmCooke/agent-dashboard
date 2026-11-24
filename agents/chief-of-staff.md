@@ -29,6 +29,12 @@ jq -r 'select(.type=="user" or .type=="assistant") | .type as $t
 
 From the digest, take for each agent: the task it was given (its first `user:` line), what it claims it did (its `REPORT` line, or else its last `assistant:` line), and what it actually ran (its `CALL` and `ERROR` lines). If you need more of one particular call, `grep` for its tool name in the file. Don't widen the digest.
 
+The digest cuts text at 300 characters, which hides main's reports to the user. Pull those in full with:
+
+```
+jq -r 'select(.type=="assistant") | .message.content | if type=="string" then [{type:"text",text:.}] else . end | .[] | select(.type=="text" and (.text|length)>300) | .text' <main>.jsonl
+```
+
 ## 2. Check and verify: claims against reality
 
 For each claim an agent made, run the cheapest check that proves it or disproves it: `git status`/`git diff`, does the file exist, run the test or command it says passed, grep for the function it says it added. Mark each claim:
@@ -36,7 +42,7 @@ For each claim an agent made, run the cheapest check that proves it or disproves
 - **UNVERIFIED**: you could not check it, and you say why
 - **WRONG**: the evidence contradicts it, and you quote that evidence
 
-Never mark something VERIFIED because an agent said so. When an agent says a rule or guard blocks something, test one disguised form of what it must block, using a dry run with no side effects. Do not change, revert, commit or push other agents' work, and do not commit the playbook yourself. Report, and let the main conversation decide.
+Never mark something VERIFIED because an agent said so. When an agent says a rule or guard blocks something, test at least one disguised form that isn't in the agent's own test cases (for shell guards: an escaped character, a variable, a line continuation), using a dry run with no side effects. Do not change, revert, commit or push other agents' work, and do not commit the playbook yourself. Report, and let the main conversation decide.
 
 ## 3. Optimize: find waste and risk
 
