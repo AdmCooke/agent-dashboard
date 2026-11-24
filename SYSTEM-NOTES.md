@@ -17,6 +17,7 @@ Facts about specific systems that agents learned the hard way. Agents read this 
 - 2026-11-21 (chief-of-staff): Sessions run agent-dashboard from the claude.ai account marketplace (`claude plugin list` showed 0.4.2 under `~/.claude/plugins/synced/`), not from the checkout. This review ran on Opus although the branch pins Haiku → after a plugin change merges, check `claude plugin list` in a new session before calling it live.
 - 2026-11-21: The claude-security scan needs the Workflow tool, which its agent didn't have here, and its `/claude-security` menu skill is user-only (`disable-model-invocation: true`) → ask the user to type `/claude-security` instead of launching the agent.
 - 2026-11-24 (main): `git push` got a 403 "Claude doesn't have GitHub access" while `gh api` reads still worked → the user reconnects GitHub on claude.ai. Don't route around it with an API file upload, which can drop a script's 100755 mode.
+- 2026-11-24 (main): The user's Mac attached through `request_computer_folder` (folder "Claude Folder", not a checkout of this repo), but its sandbox blocked `github.com` and `api.github.com`, and its `gh` token was invalid → a branch delete can't run there either. The repo has "Automatically delete head branches" on, which removed the session branch after each merge.
 
 ## Plugin evals (`claude plugin eval`)
 
