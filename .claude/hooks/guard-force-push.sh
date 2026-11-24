@@ -15,8 +15,8 @@
 # push or git, an interpreter (python3 -c, node -e), a rebuilt or modified git binary, environment set
 # outside the command (a shell profile), a shell write or cd whose .git or shell-snapshot path comes from a
 # variable or a glob (those checks read literal paths), and tools other than Bash and Write/Edit. GitHub
-# rulesets are the only server-side guarantee: protect-main covers main, and the user is adding rulesets for
-# other branches.
+# rulesets are the only server-side guarantee: protect-main covers main, no-force-push covers every branch
+# except agent/**/*, and no-delete covers every branch except agent/**/* and claude/**/* (read 2026-11-24).
 # Every form it must handle is in guard-force-push.cases. Run test-guard-force-push.sh after any change.
 # Bash 3.2 compatible (macOS).
 input=$(cat)
