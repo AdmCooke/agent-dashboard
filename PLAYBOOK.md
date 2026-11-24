@@ -45,7 +45,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 
 ## Open questions for the user
 
-- 2026-11-24 (chief-of-staff + main): Approve the Chief of Staff's proposed addition to its instructions? It would send the hook the JSON Claude Code sends, check where a push lands with a dry run in a scratch clone, report its probe count against the cap, and put probes that contain git and push in a file. Main suggests one more line: test file-path rules once with the real Write tool.
+- None.
 
 ## Answers from the user
 
@@ -62,4 +62,5 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-24: Branches: cloud sessions push to their assigned `claude/<name>`, local sessions keep `agent/<topic>`, force pushes stay on `agent/` → standing rules.
 - 2026-11-24: Keep the guard editable, with no Write/Edit block on `.claude/hooks/` or `.claude/settings*.json` → standing rule.
 - 2026-11-24: The Chief of Staff's proposed upgrade is approved and applied in `agents/chief-of-staff.md` (commit cd6b9a2).
+- 2026-11-24: The Chief of Staff's probe-method addition (hook JSON, dry run in a scratch clone, probe count against the cap, git and push probes in a file) is approved with main's extra sentence on testing file-path rules with the real Write tool. Applied in `agents/chief-of-staff.md`, plugin 0.4.4.
 - 2026-11-24: This review runs on Haiku, picked over Opus at about $2 against $5 to $10. Recorded only.

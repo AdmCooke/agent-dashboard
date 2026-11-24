@@ -1,1 +1,1 @@
-{ "name": "agent-dashboard", "version": "0.4.3", "description": "Live pane showing what the main loop and every subagent is doing, plus a Chief of Staff agent that verifies their work", "types": "./types/index.d.ts" }
+{ "name": "agent-dashboard", "version": "0.4.4", "description": "Live pane showing what the main loop and every subagent is doing, plus a Chief of Staff agent that verifies their work", "types": "./types/index.d.ts" }
