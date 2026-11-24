@@ -9,6 +9,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - When the user asks you to merge a pull request, merge it. Their request is enough; don't wait for checks or a review first.
 - Name branches you create `agent/<topic>`. In a cloud session, push to the `claude/<name>` branch it assigns you instead. Force-push (`--force-with-lease`, never `--force`) only to an `agent/` branch you created in this session, never to a `claude/` branch, anyone else's branch or `main`.
 - The repo is public: treat every commit, branch name and PR text as public. Never put secrets, credentials, email addresses or private notes in them.
+- End PR descriptions with the Claude Code attribution line without its robot emoji: `Generated with [Claude Code](https://claude.com/claude-code)`, then the session link. The user's rule outranks the default footer.
 - Before editing, `git fetch` and start a new `agent/` branch from `origin/main`, even when the checkout is on another branch. In a cloud session, merge `origin/main` into the assigned branch instead of resetting it.
 - After your pull request merges, delete your own branch where you can. Where you can't (cloud sessions), list it for the user with the command to delete it.
 - A change is "done" only once it's in the repo (merged) or on claude.ai. A change that lives only in this cloud container (user settings, a local plugin install) is "temporary": say so, and say how to make it permanent.
@@ -43,6 +44,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-21 (chief-of-staff): Edits to `PLAYBOOK.md` don't reach agents launched later in the same session. A playbook change applies from the next session. Measure it in a fresh `claude -p` run.
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
+- 2026-11-24 (main): A Bash call that only wrote files with several `cat > file <<'EOF'` heredocs was blocked as a possible dangerous removal, and a session scoped to one repo has no safe way to create a new GitHub repo → write files with the Write tool, and when a task names a repo that doesn't exist, build outside this public checkout, hand the user the files, and ask them to create the repo.
 ## Open questions for the user
 
 - None.
@@ -64,3 +66,4 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-24: The Chief of Staff's proposed upgrade is approved and applied in `agents/chief-of-staff.md` (commit cd6b9a2).
 - 2026-11-24: The Chief of Staff's probe-method addition (hook JSON, dry run in a scratch clone, probe count against the cap, git and push probes in a file) is approved with main's extra sentence on testing file-path rules with the real Write tool. Applied in `agents/chief-of-staff.md`, plugin 0.4.4.
 - 2026-11-24: This review runs on Haiku, picked over Opus at about $2 against $5 to $10. Recorded only.
+- 2026-11-24: "Drop the emoji from future PRs" → standing rule on the attribution footer.
