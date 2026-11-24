@@ -7,6 +7,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - Never report something as done or passing unless you saw the evidence in this run. Say what you did not check.
 - Stay inside the task you were given. Name extra ideas in one line rather than building them.
 - When the user asks you to merge a pull request, merge it. Their request is enough; don't wait for checks or a review first.
+- Merge without asking when all of this holds: you opened the pull request in this session, the user asked for the change, and its diff touches only `PLAYBOOK.md`, `SYSTEM-NOTES.md` or comment lines. Read the diff's file list first, and report the merge. Keep asking for anything else: executable lines in the guard hook, `.claude/settings*.json`, plugin or agent files, or a pull request another session opened.
 - Name branches you create `agent/<topic>`. In a cloud session, push to the `claude/<name>` branch it assigns you instead. Force-push (`--force-with-lease`, never `--force`) only to an `agent/` branch you created in this session, never to a `claude/` branch, anyone else's branch or `main`.
 - The repo is public: treat every commit, branch name and PR text as public. Never put secrets, credentials, email addresses or private notes in them.
 - End PR descriptions with the Claude Code attribution line without its robot emoji: `Generated with [Claude Code](https://claude.com/claude-code)`, then the session link. The user's rule outranks the default footer.
@@ -67,3 +68,4 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-24: The Chief of Staff's probe-method addition (hook JSON, dry run in a scratch clone, probe count against the cap, git and push probes in a file) is approved with main's extra sentence on testing file-path rules with the real Write tool. Applied in `agents/chief-of-staff.md`, plugin 0.4.4.
 - 2026-11-24: This review runs on Haiku, picked over Opus at about $2 against $5 to $10. Recorded only.
 - 2026-11-24: "Drop the emoji from future PRs" → standing rule on the attribution footer.
+- 2026-11-24: Merging without asking: "use your recommended scope." Own-session pull requests the user asked for that touch only the playbook, the system notes or comments → standing rule.
