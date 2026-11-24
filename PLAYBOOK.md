@@ -42,6 +42,8 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-24 (main): A Haiku review estimated itself at about $0.05 after 19 calls. Its finished transcript showed 95 calls, about $0.30 to $1.60 by token counts, because Haiku's rate rises past 100K-token prompts and its calls averaged about 94K. Estimate a subagent from its finished transcript. One `claude -p` probe cost $0.41 (CLI `total_cost_usd`).
 - 2026-11-21 (chief-of-staff): Edits to `PLAYBOOK.md` don't reach agents launched later in the same session. A playbook change applies from the next session. Measure it in a fresh `claude -p` run.
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
+- 2026-11-23 (main): HeyGen shut down its v1 and v2 API on 2026-10-31, and WebFetch fails DNS on its docs → read `developers.heygen.com/llms.txt` and the `.md` pages through Bright Data, and build on v3 only (twin from `POST /v3/avatars`, consent link, `POST /v3/videos`, `POST /v3/models/audio/tts`).
+- 2026-11-23 (main): The Reel Studio server code is in no GitHub repo, and on the attached Mac the sandbox blocks npm, Hostinger, and base64 copies of a zip, and caps command output near 29 KB → read the text files in line ranges, rebuild them in the cloud container, check the SHA-256, test there, and hand the user a zip of changed files to upload.
 
 ## Open questions for the user
 
