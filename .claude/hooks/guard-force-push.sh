@@ -13,8 +13,10 @@
 #
 # Known limits: a push inside a script file or a git hook, a command built at run time without the word
 # push or git, an interpreter (python3 -c, node -e), a rebuilt or modified git binary, environment set
-# outside the command (a shell profile), and tools other than Bash and Write/Edit. GitHub rulesets are the
-# only server-side guarantee: protect-main covers main, and the user is adding rulesets for other branches.
+# outside the command (a shell profile), a shell write or cd whose .git or shell-snapshot path comes from a
+# variable or a glob (those checks read literal paths), and tools other than Bash and Write/Edit. GitHub
+# rulesets are the only server-side guarantee: protect-main covers main, and the user is adding rulesets for
+# other branches.
 # Every form it must handle is in guard-force-push.cases. Run test-guard-force-push.sh after any change.
 # Bash 3.2 compatible (macOS).
 input=$(cat)
