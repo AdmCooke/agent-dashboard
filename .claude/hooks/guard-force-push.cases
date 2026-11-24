@@ -174,3 +174,11 @@ block	{g..g}it q -f origin main
 
 # v6: push.default is read at push time, so changing it is fine.
 allow	git config push.default upstream
+
+# Chief of Staff review, 2026-11-24 (symrefs, a copied git, a linked worktree and the stray-quote
+# alias forms need repo state, so they are in test-guard-force-push.sh)
+block	cd .git && printf '[alias]\n\tx = push\n' >> config
+block	cd -- .git && printf 'URL: ../bare.git\n' > remotes/gh
+block	pushd .GIT/hooks
+block	echo 'export GIT_CONFIG_COUNT=1' >> ~/.claude/shell-snapshots/snapshot-bash-1.sh
+allow	cd .github/workflows && ls

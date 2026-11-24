@@ -16,6 +16,7 @@ Facts about specific systems that agents learned the hard way. Agents read this 
 - 2026-11-21: A built-in safety check refused `rm -rf $D` on a scratch folder in a compound command, because it can't resolve the variable → make a fresh folder per try with `mktemp -d <scratchpad>/name.XXXX` instead of deleting and reusing one.
 - 2026-11-21 (chief-of-staff): Sessions run agent-dashboard from the claude.ai account marketplace (`claude plugin list` showed 0.4.2 under `~/.claude/plugins/synced/`), not from the checkout. This review ran on Opus although the branch pins Haiku → after a plugin change merges, check `claude plugin list` in a new session before calling it live.
 - 2026-11-21: The claude-security scan needs the Workflow tool, which its agent didn't have here, and its `/claude-security` menu skill is user-only (`disable-model-invocation: true`) → ask the user to type `/claude-security` instead of launching the agent.
+- 2026-11-24 (main): `git push` got a 403 "Claude doesn't have GitHub access" while `gh api` reads still worked → the user reconnects GitHub on claude.ai. Don't route around it with an API file upload, which can drop a script's 100755 mode.
 
 ## Plugin evals (`claude plugin eval`)
 

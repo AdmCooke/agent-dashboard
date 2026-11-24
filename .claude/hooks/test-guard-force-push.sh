@@ -91,6 +91,27 @@ done
 check block "$root" "$(dirname "$(command -v git)")/g?t push -f origin main"
 check block "$root" "$(git --exec-path)/git-pus? -f origin main"
 
+# Chief of Staff review, 2026-11-24.
+commit() { git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m x; }
+# A symbolic ref outside refs/heads, with and without an existing target.
+symx=$(repo); git -C "$symx" symbolic-ref refs/agent/y refs/heads/main; git -C "$symx" symbolic-ref refs/tags/agent/z refs/heads/main
+check block "$symx" "git push --force-with-lease origin agent/y"
+check block "$symx" "git push -f origin agent/z"
+symy=$(repo); commit "$symy"; git -C "$symy" branch -q main; git -C "$symy" symbolic-ref refs/agent/y refs/heads/main
+check block "$symy" "git push --force-with-lease origin agent/y"
+check allow "$symy" "git push --force-with-lease origin agent/topic"
+# A copy of the git binary under another name.
+copied=$(mktemp -d); cp "$(command -v git)" "$copied/gcopy"
+check block "$copied" "./gcopy push -f origin main"
+# A legacy remote file read through a linked worktree, which shares the main git dir.
+wt=$(repo); commit "$wt"; mkdir -p "$wt/.git/remotes"
+printf 'URL: ../bare.git\nPush: +refs/heads/main:refs/heads/main\n' > "$wt/.git/remotes/gh"
+git -C "$wt" worktree add -q --detach "$wt/wt"
+check block "$wt" "git -C wt push gh"
+# A stray quote must not hide an alias call from the splitter (the regression in 2093533).
+check block "$aliased" "echo \$'\\'' ; git y -f origin main"
+check block "$aliased" "ls -d . # it's here"$'\n'"git y -f origin main"
+
 # Input the JSON readers can't decode (a lone surrogate) must fail closed.
 raw='{"cwd":"/tmp","tool_input":{"command":"git push -f origin main \ud800"}}'
 for mode in jq py none; do
@@ -98,8 +119,8 @@ for mode in jq py none; do
   if [ "$got" = block ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL [$mode] unreadable input let through"; fi
 done
 
-# Write and Edit must not change a git config file.
-for f in "$root/.git/config" "$HOME/.gitconfig" "$HOME/.config/git/config" /etc/gitconfig "$root/.git/config.worktree" "$root/.GIT/config" "$root/.git//config" "$root/.git/hooks/pre-push"; do
+# Write and Edit must not change a git config file, a git hook or the shell snapshot.
+for f in "$root/.git/config" "$HOME/.gitconfig" "$HOME/.config/git/config" /etc/gitconfig "$root/.git/config.worktree" "$root/.GIT/config" "$root/.git//config" "$root/.git/hooks/pre-push" "$HOME/.claude/shell-snapshots/snapshot-bash-1.sh"; do
   json=$(jq -cn --arg f "$f" '{tool_input: {file_path: $f, content: "x"}}')
   run jq "$json"; got=$(verdict $?)
   if [ "$got" = block ]; then pass=$((pass + 1)); else fail=$((fail + 1)); echo "FAIL Write/Edit allowed: $f"; fi

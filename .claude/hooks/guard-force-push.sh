@@ -2,18 +2,19 @@
 # Tripwire for git pushes that force-update or delete a branch other than agent/<topic>.
 #
 # Design: default-deny. Earlier versions tried to understand any shell text and lost to every review
-# (10, 8, 30, 29 and 14 bypasses). Any Bash command that could push must be one plain command:
+# (10, 8, 30, 29, 14 and 5 bypasses). A Bash command that could push must be one plain command:
 #   git [-C <dir>] push [<known options>] [<remote> [<refspec>...]] [2>&1 | tail -<n>]
-# with plain characters only. Anything else that could push is blocked. Text that mentions a push
-# (a commit message, a PR body) goes in a file written with the Write tool; searches use the Grep tool.
-# A plain push is then checked against the repository's own state: config, legacy remote files and
-# symbolic refs decide where it lands and whether it forces, deletes or mirrors. Every program a command
-# runs is resolved, so git under another name (a symlink, a glob) is still git, and git aliases are
-# resolved before they run.
+# with plain characters only, or it is blocked. Text that mentions a push (a commit message, a PR body)
+# goes in a file written with the Write tool; searches use the Grep tool.
+# A plain push is checked against the git config, symbolic refs and legacy remote files it was tested with.
+# Programs are resolved through symlinks, globs, brace expansion and byte-identical copies of git, and git
+# aliases are resolved before they run. It is a tripwire, tested against the forms in guard-force-push.cases
+# and the review probe files, not a guarantee.
 #
 # Known limits: a push inside a script file or a git hook, a command built at run time without the word
-# push or git, an interpreter (python3 -c, node -e), and tools other than Bash and Write/Edit. GitHub's
-# protect-main ruleset is the only server-side guarantee, and it covers main only.
+# push or git, an interpreter (python3 -c, node -e), a rebuilt or modified git binary, environment set
+# outside the command (a shell profile), and tools other than Bash and Write/Edit. GitHub rulesets are the
+# only server-side guarantee: protect-main covers main, and the user is adding rulesets for other branches.
 # Every form it must handle is in guard-force-push.cases. Run test-guard-force-push.sh after any change.
 # Bash 3.2 compatible (macOS).
 input=$(cat)
@@ -54,6 +55,8 @@ if [ -n "$file" ]; then
   case $f in
     */.git/config|*/.git/config.worktree|*/.git/worktrees/*/config*|*/.git/hooks/*|*/.git/remotes/*|*/.git/branches/*|*gitconfig|*/git/config)
       block "editing $file can change where pushes go or run one. Ask the user to change git config." ;;
+    */.claude/shell-snapshots/*)
+      block "editing $file changes the environment of every later Bash command, git's included." ;;
   esac
   exit 0
 fi
@@ -84,7 +87,7 @@ if [[ $norm =~ gh[[:space:]]+api ]]; then
 fi
 
 # Writing inside .git or a git config file through the shell can redirect, force or run a later push.
-gitpath='(\.git/|gitconfig|/git/config)'
+gitpath='(\.git/|gitconfig|/git/config|\.claude/shell-snapshots/)'
 write_re=">>?[[:space:]]*[^[:space:]]*$gitpath|(^|[^a-z])(tee|cp|mv|ln|install|dd|rsync|truncate|patch)[[:space:]][^;&|]*$gitpath|(sed|perl)[[:space:]]+-[a-z]*i[^;&|]*$gitpath"
 [[ $norm =~ $write_re ]] && block "this writes inside .git or a git config file through the shell. Ask the user to change git settings."
 
@@ -104,25 +107,18 @@ is_git_prog() {   # is_git_prog WORD: true when WORD runs git (a path, a symlink
   [ -n "$p" ] && [ -e "$p" ] || return 1
   real=$(readlink -f -- "$p" 2>/dev/null) || real=$p
   case ${real##*/} in git|git-*) return 0 ;; esac
+  # A copy of the git binary under another name is still git.
+  if [ -f "$real" ] && [ -n "$gitbin" ] && [ "$(wc -c <"$real" 2>/dev/null)" = "$gitsize" ]; then
+    cmp -s "$real" "$gitbin" && return 0
+  fi
   return 1
 }
-# One simple command per line, split on ; | & and newlines outside quotes, so a quoted jq or awk program
-# stays one argument. Backslash-newline joins lines, and 2>&1 or &> is a redirection, not a split.
-segs=${cmd//>&/>}; segs=${segs//&>/>}
-segs=$(printf '%s\n' "$segs" | awk '
-  { line = $0 "\n"; n = length(line)
-    for (i = 1; i <= n; i++) {
-      c = substr(line, i, 1)
-      if (esc) { esc = 0; if (c != "\n") seg = seg c; continue }
-      if (sq) { if (c == "\047") sq = 0; seg = seg (c == "\n" ? " " : c); continue }
-      if (c == "\\") { if (substr(line, i + 1, 1) != "\n") seg = seg c; esc = 1; continue }
-      if (dq) { if (c == "\"") dq = 0; seg = seg (c == "\n" ? " " : c); continue }
-      if (c == "\047") { sq = 1; seg = seg c; continue }
-      if (c == "\"") { dq = 1; seg = seg c; continue }
-      if (c == ";" || c == "|" || c == "&" || c == "\n") { print seg; seg = ""; continue }
-      seg = seg c
-    } }
-  END { if (seg != "") print seg }')
+gitbin=$(command -v git 2>/dev/null); [ -n "$gitbin" ] && gitbin=$(readlink -f -- "$gitbin" 2>/dev/null || echo "$gitbin")
+gitsize=; [ -n "$gitbin" ] && gitsize=$(wc -c <"$gitbin" 2>/dev/null)
+# One simple command per line, split on every ; | & and newline. This over-splits quoted text, which is safe
+# here: a quote-aware splitter (2093533) could be thrown out of step with bash by a stray quote, and then
+# hid an alias call (Chief of Staff review, 2026-11-24).
+segs=$cmd; segs=${segs//&&/$'\n'}; segs=${segs//||/$'\n'}; segs=${segs//;/$'\n'}; segs=${segs//|/$'\n'}; segs=${segs//&/$'\n'}
 while IFS= read -r seg; do
   s=${seg//[\"\']/}
   read -ra w <<<"$s"
@@ -162,6 +158,13 @@ while IFS= read -r seg; do
   prog=${w[$k]}
   [ -n "$prog" ] || continue
   prog=${prog//\\/}
+  # Inside a .git folder, the shell writes git's own files by relative path, which the write check can't see.
+  # It checks names only: a path from a variable, a glob or $(git rev-parse --git-dir) gets past it.
+  case $prog in cd|pushd)
+    for a in "${w[@]:$((k + 1))}"; do
+      case ${a//\\/} in *.[Gg][Ii][Tt]|*.[Gg][Ii][Tt]/*) block "changing into a .git folder lets the shell rewrite git's own files." ;; esac
+    done ;;
+  esac
   # A program name the shell builds at run time can be git.
   case $prog in *'$'*|*'`'*)
     [ $has_git = 1 ] || [ $could_push = 1 ] && deny "the program this runs is built by the shell at run time, so the guard can't check it." ;;
@@ -282,7 +285,12 @@ if [ -z "$r" ]; then
     else block "this push has no remote set and several remotes exist, so its destination can't be checked."; fi
   fi
 fi
-[ -e "$gd/remotes/$r" ] || [ -e "$gd/branches/$r" ] && block "remote '$r' comes from a legacy .git/remotes or .git/branches file, which the guard doesn't read."
+# Legacy remote files live in the main repository's git dir, which a linked worktree shares.
+cd_=$(git -C "$repo" rev-parse --git-common-dir 2>/dev/null); case $cd_ in /*) ;; ?*) cd_=$repo/$cd_ ;; esac
+for g in "$gd" "$cd_"; do
+  [ -n "$g" ] || continue
+  [ -e "$g/remotes/$r" ] || [ -e "$g/branches/$r" ] && block "remote '$r' comes from a legacy .git/remotes or .git/branches file, which the guard doesn't read."
+done
 [ "$(cfg --type=bool --get "remote.$r.mirror")" = true ] && block "remote '$r' is set to mirror, which can overwrite every branch."
 cfgrefs=()
 while IFS= read -r spec; do [ -n "$spec" ] && cfgrefs+=("$spec"); done < <(cfg --get-all "remote.$r.push")
@@ -294,13 +302,21 @@ case $(cfg --get push.default) in upstream|tracking) remap=1 ;; esac
 case $(cfg --get push.recurseSubmodules) in on-demand|only) [ $force = 1 ] && block "push.recurseSubmodules would force-push submodules too." ;; esac
 [ ${#refs[@]} -eq 0 ] && [ $del = 0 ] && refs=("${cfgrefs[@]}")
 
-# dst REF: where REF lands, following a symbolic ref when it names no destination.
+# dst REF: where REF lands. A ref with no destination lands where git resolves it, following symbolic refs
+# anywhere (refs/heads, refs/tags, refs/agent...). A name that resolves outside refs/heads is refused.
 dst() {
-  local x=${1#+} d s
+  local x=${1#+} d full c t
   case $x in
     *:*) d=${x##*:} ;;
     *) d=$x
-       s=$(git -C "$repo" symbolic-ref -q "refs/heads/${x#refs/heads/}" 2>/dev/null) && [ -n "$s" ] && d=$s ;;
+       full=$(git -C "$repo" rev-parse --symbolic-full-name "$x" 2>/dev/null)
+       # A symbolic ref whose target doesn't exist yet doesn't resolve, so ask each name git tries.
+       if [ -z "$full" ] || [ "$full" = "$x" ]; then
+         for c in "$x" "refs/$x" "refs/tags/$x" "refs/heads/$x" "refs/remotes/$x" "refs/remotes/$x/HEAD"; do
+           t=$(git -C "$repo" symbolic-ref -q "$c" 2>/dev/null) && { full=$t; break; }
+         done
+       fi
+       [ -n "$full" ] && d=$full ;;
   esac
   printf '%s' "${d#refs/heads/}"
 }
