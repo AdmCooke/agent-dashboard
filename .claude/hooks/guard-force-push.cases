@@ -1,0 +1,184 @@
+# Cases for guard-force-push.sh, run by test-guard-force-push.sh.
+# Each line: block or allow, a tab, then the Bash command the agent would run.
+# Every disguised form a reviewer or agent found must be here.
+
+# Plain force pushes to a branch that is not agent/
+block	git push --force origin main
+block	git push -f origin main
+block	git push origin main --force
+block	git push origin main -f
+block	/usr/bin/git push -f origin main
+block	git push --force origin agent/x main
+# Refspec forms (playbook lesson, 2026-11-19)
+block	git push origin +main
+block	git push --force origin HEAD:main
+block	git push --force origin HEAD:refs/heads/main
+block	git push --force-with-lease origin agent/probe:main
+block	git push --force-with-lease origin agent/probe:refs/heads/main
+block	git push --force-with-lease origin agent/probe:premier-sales-agent
+# Quoting and bundled short flags (code review, 2026-11-21)
+block	git push origin "+HEAD:main"
+block	git push origin '+HEAD:main'
+block	git push -uf origin main
+block	git push -fu origin main
+# A force push chained after a harmless command
+block	git push origin agent/x && git push --force origin main
+block	git push origin agent/x; git push --force origin main
+block	git status | cat && git push -f origin main
+block	(git push -f origin main)
+block	bash -c "git push -f origin main"
+# Pushes that reach many branches at once
+block	git push --mirror origin
+block	git push --force --all origin
+block	git push --force-with-lease --tags origin
+# The shell rewrites the destination after the hook reads it
+block	B=:main; git push -f origin agent/x$B
+block	git push -f origin agent/x`echo :main`
+block	git push -f origin "agent/x$(printf ':main')"
+block	G=git; $G push -f origin main
+block	git push --force origin agent/{x,main}
+block	git push --force origin ma\in
+# No branch named, so the destination depends on the checkout or config
+block	git push --force
+block	git push --force origin HEAD
+block	cd ../other && git push --force-with-lease
+block	git -C ../other push --force
+block	git push -o ci.skip --force origin main
+# The shell supplies the force or the destination (Chief of Staff review, 2026-11-21).
+# <NL> is a newline, so the last one is a backslash-continued line.
+block	git push origin \+main
+block	git push origin main \-f
+block	F=-f; git push $F origin main
+block	P=+main; git push origin $P
+block	git push origin $'\x2bmain'
+block	git push origin main -$'f'
+block	git push origin main \<NL>  --force
+block	touch +main; git push origin [+]main
+block	git push origin {+main,}
+block	git push -u origin "$(git branch --show-current)"
+# Git config supplies a forced refspec, a mirror or an alias
+block	git config remote.origin.push +HEAD:refs/heads/main; git push origin
+block	git config --global REMOTE.origin.PUSH +HEAD:refs/heads/main
+block	git -c remote.origin.push=+HEAD:refs/heads/main push origin
+block	GIT_CONFIG_PARAMETERS="'remote.origin.mirror=true'" git push origin
+block	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.push GIT_CONFIG_VALUE_0=+HEAD:main git push origin
+block	git config alias.fp "push --force"
+block	git remote add --mirror=push backup ../backup.git
+# Deleting a branch that is not agent/
+block	git push origin --delete premier-sales-agent
+block	git push origin :premier-sales-agent
+block	git push -d origin main
+# Independent review, 2026-11-21: quotes the shell joins, option prefixes, other entry points
+block	git pu''sh -f origin main
+block	g''it push -f origin main
+block	git pu\sh -f origin main
+block	P=push; git $P -f origin main
+block	git {push,} -f origin main
+block	git push origin main -''f
+block	git push origin --del''ete premier-sales-agent
+block	git push origin --del premier-sales-agent
+block	git push --mirr origin
+block	git push --force-w origin main
+block	git push --all --prune origin
+block	git -c push.default=upstream push --force-with-lease origin agent/topic
+block	git -c "remote.origin.push"=+HEAD:refs/heads/main push origin
+block	git config 'remote.origin.push' '+HEAD:refs/heads/main'; git push origin
+block	git -c remote.origin.push=+HEAD:refs/heads/main -c x.y=--get push origin
+block	git -c alias.p=pu''sh p -f origin main
+block	git --shallow-file nofile push -f origin main
+block	git --attr-source HEAD push -f origin main
+block	/usr/lib/git-core/git-push -f origin main
+block	git send-pack --force ../bare.git main
+block	echo -f | xargs git push origin main
+block	g() { git "$@"; }; g push -f origin main
+block	GIT_DIR=../other/.git git push origin
+block	HOME=/tmp/fakehome git push origin
+block	env -C ../other git push origin
+block	export GIT_DIR=../other/.git; git push origin
+block	printf '[remote "origin"]\n\tpush = +HEAD:refs/heads/main\n' >> .git/config; git push origin
+block	git remote add --mirr=push backup ../bare.git
+block	git push --force-with-lease origin agent/x ">:main"
+# A heredoc body that runs as code must still be read
+block	bash -c "$(cat <<'EOF'<NL>git push -f origin main<NL>EOF<NL>)"
+block	x=$(cat <<'EOF'<NL>git push -f origin main<NL>EOF<NL>); bash -c "$x"
+block	cat <<'EOF' | bash<NL>git push -f origin main<NL>EOF
+block	cat <<EOF<NL>$(git push -f origin main)<NL>EOF
+# Output redirection must not hide or invent a destination
+block	git push -f origin main 2>&1 | tail -2
+block	git push -f origin main > /tmp/push.log
+
+# Allowed: no force, or every destination is an agent/ branch
+allow	git status
+allow	git push origin main
+allow	git push -u origin claude/laughing-ritchie-r6c6c1
+allow	git push --force-with-lease origin agent/x
+allow	git push --force-with-lease=agent/x origin agent/x
+allow	git push -f origin HEAD:agent/x
+allow	git push --force origin refs/heads/agent/x
+allow	git push --force-with-lease origin "agent/x"
+allow	git push -o ci.skip --force-with-lease origin agent/x
+allow	git stash push -m wip
+allow	git push --force-with-lease origin agent/x 2>&1
+allow	git push --force-with-lease origin agent/x 2>/dev/null | tail -2
+allow	git push
+allow	git push -u origin HEAD
+allow	git push origin --delete agent/old-topic
+allow	git push origin :agent/old-topic
+allow	git config --get remote.origin.push
+allow	git config remote.origin.pushurl https://example.invalid/x.git
+allow	cd /tmp && git status
+allow	git config --unset remote.origin.push
+allow	cp $SRC $DST && bash $DIR/run.sh $DIR/list.tsv
+allow	git log --oneline -5 && git status --short
+allow	head -3 .git/config 2>&1 | tail -2
+block	echo push = +HEAD:refs/heads/main | tee -a .git/config
+
+# Blocked by design since v5 (default-deny): anything push-shaped that isn't one plain push.
+# The fix for an agent is in the block message: one plain command, or a file for text.
+block	git push origin agent/x && git push origin main
+block	git -c push.default=current push --force-with-lease origin agent/x
+block	git -C ../other push --force-with-lease origin agent/x
+block	git push --force-with-lease origin agent/x > /tmp/push.log 2>&1
+block	git push --force-with-lease origin agent/x  # rewrite my own branch
+block	git p''ush -f origin main
+block	gh pr create --title "Guard fix" --body 'Blocks git push -f origin main'
+block	rg "git push" .
+block	gh api -X DELETE repos/AdmCooke/agent-dashboard/git/refs/heads/premier-sales-agent
+block	git push origin agent/x; git push -f origin main
+
+# Everyday shapes that must keep working under default-deny
+allow	git push -q origin claude/laughing-ritchie-r6c6c1 2>&1 | tail -2
+allow	git push -u origin "agent/topic"
+allow	git commit -q -m 'Explain why the guard blocks git push -f origin main'
+allow	git commit -q -F /tmp/commit-message.txt
+allow	grep -rn push .
+allow	git stash push -m wip
+allow	gh pr view 18 --json state
+block	git commit -m "$(cat <<'EOF'<NL>Document how to publish a branch<NL><NL>Run `git push -u origin agent/topic` once the tests pass.<NL>EOF<NL>)"
+
+# Third independent review, 2026-11-21 (state-dependent forms are in test-guard-force-push.sh)
+block	env -S'git push -f origin main'
+block	git -c $'\x61lias.x=\x70ush' x -f origin main
+block	GIT_CONFIG_SYSTEM=a3.cfg git x -f origin main
+block	gh api --method=DELETE repos/AdmCooke/agent-dashboard/git/refs/heads/premier-sales-agent
+block	gh api graphql -f query='mutation { deleteRef(input:{refId:"x"}) { clientMutationId } }'
+allow	git add .claude/hooks/guard-force-push.sh .claude/hooks/guard-force-push.cases
+allow	git checkout -b agent/fix-push-guard origin/main
+allow	git commit -qm 'Explain the push guard'
+allow	docker push example/image:latest
+# Quoted text with | ; & inside it is not a command (a jq or awk program)
+allow	jq -r '.items[] | {name: .n, id: .i} | select(.id > 3)' data.json && git status
+allow	awk -F, '{ print $1; print $2 }' list.csv | sort | git hash-object --stdin
+block	{gi,x}t q -f origin main
+block	{g..g}it q -f origin main
+
+# v6: push.default is read at push time, so changing it is fine.
+allow	git config push.default upstream
+
+# Chief of Staff review, 2026-11-24 (symrefs, a copied git, a linked worktree and the stray-quote
+# alias forms need repo state, so they are in test-guard-force-push.sh)
+block	cd .git && printf '[alias]\n\tx = push\n' >> config
+block	cd -- .git && printf 'URL: ../bare.git\n' > remotes/gh
+block	pushd .GIT/hooks
+block	echo 'export GIT_CONFIG_COUNT=1' >> ~/.claude/shell-snapshots/snapshot-bash-1.sh
+allow	cd .github/workflows && ls

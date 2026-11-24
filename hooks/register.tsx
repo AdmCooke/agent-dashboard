@@ -7,7 +7,7 @@ const PANE = 'agent-dashboard'
 const MAIN = 'main'
 // Keyed by agentId ('main' for the main loop); bump the tag if Activity changes.
 const activity = atom({ plugin: 'agent-dashboard', key: 'activity' } as const, {}, {
-  shape: 'activity-3',
+  shape: 'activity-4',
 })
 
 // A short hint of what a tool call touches, from the common input fields.
@@ -52,7 +52,7 @@ const ago = (ms: number) => {
 const set = ($: EngineInterface, key: string, fn: (a: Activity) => Activity) =>
   update($, activity, all => ({
     ...all,
-    [key]: fn(all[key] ?? { last: '', calls: 0, isRunning: false, at: 0, tokensIn: 0, tokensOut: 0, usd: 0, isUnpriced: false }),
+    [key]: fn(all[key] ?? { last: '', calls: 0, inFlight: 0, isRunning: false, at: 0, tokensIn: 0, tokensOut: 0, usd: 0, isUnpriced: false }),
   }))
 
 export const register: Register = on => {
@@ -70,10 +70,16 @@ export const register: Register = on => {
   on('tool.call', async ($, e, next) => {
     const key = e.agentId ?? MAIN
     const label = `${e.tool} ${hint(e)}`.trim()
-    await set($, key, a => ({ ...a, last: label, calls: a.calls + 1, isRunning: true, at: Date.now() }))
-    const ran = await next(e)
-    await set($, key, a => ({ ...a, isRunning: false, at: Date.now() }))
-    return ran
+    await set($, key, a => ({ ...a, last: label, calls: a.calls + 1, inFlight: (a.inFlight ?? 0) + 1, isRunning: true, at: Date.now() }))
+    // Parallel calls: the card stays running until the last one returns, even if one throws.
+    try {
+      return await next(e)
+    } finally {
+      await set($, key, a => {
+        const inFlight = Math.max(0, (a.inFlight ?? 0) - 1)
+        return { ...a, inFlight, isRunning: inFlight > 0, at: Date.now() }
+      })
+    }
   })
 
   // Each model request of any loop (main or subagent) reports its usage.
@@ -95,7 +101,7 @@ export const register: Register = on => {
 
   // Redraw when any loop finishes a turn, so finished agents show it.
   on('turn.complete', async ($, e, next) => {
-    await set($, e.agentId ?? MAIN, a => ({ ...a, isRunning: false, at: Date.now() }))
+    await set($, e.agentId ?? MAIN, a => ({ ...a, inFlight: 0, isRunning: false, at: Date.now() }))
     return next(e)
   })
 
@@ -123,7 +129,7 @@ export const register: Register = on => {
           const color = agent.status === 'failed' || agent.status === 'killed' ? 'red'
             : agent.status === 'completed' ? 'green' : 'yellow'
           return (
-            <Box flexDirection="column" marginTop={1}>
+            <Box key={agent.id} flexDirection="column" marginTop={1}>
               <Button key={agent.id} onPress={() => $.ui.view({ agentId: agent.id })}>
                 {agent.name ?? agent.type}: {agent.description}
               </Button>
