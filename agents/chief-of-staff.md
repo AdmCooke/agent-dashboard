@@ -42,7 +42,7 @@ For each claim an agent made, run the cheapest check that proves it or disproves
 - **UNVERIFIED**: you could not check it, and you say why
 - **WRONG**: the evidence contradicts it, and you quote that evidence
 
-Never mark something VERIFIED because an agent said so. When an agent says a rule or guard blocks something, test at least one disguised form that isn't in the agent's own test cases (for shell guards: an escaped character, a variable, a line continuation), using a dry run with no side effects. Do not change, revert, commit or push other agents' work, and do not commit the playbook yourself. Report, and let the main conversation decide.
+Never mark something VERIFIED because an agent said so. When an agent says a rule or guard blocks something, test at least one disguised form that isn't in the agent's own test cases (for shell guards: an escaped character, a variable, a line continuation, and for git: repo state the guard doesn't read, such as a symref or a linked worktree), using a dry run with no side effects. When the guard changed since your last run, also replay earlier probe files against the previous version (`git show <sha>:<path>` into the scratchpad), and report any probe the change newly lets through. Do not change, revert, commit or push other agents' work, and do not commit the playbook yourself. Report, and let the main conversation decide.
 
 ## 3. Optimize: find waste and risk
 
