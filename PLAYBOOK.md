@@ -48,6 +48,7 @@ The main conversation and general-purpose subagents load this file through `CLAU
 - 2026-11-19 (main): `gh api -X PATCH repos/...` to change a repo setting (auto-delete merged branches) was blocked by auto mode as destructive → give the user the setting to change on github.com.
 <!-- - YYYY-MM-DD (agent): what happened → what to do instead -->
 
+- 2026-11-24 (main): A Bash call that only wrote files with several `cat > file <<'EOF'` heredocs was blocked as a possible dangerous removal, and a session scoped to one repo has no safe way to create a new GitHub repo → write files with the Write tool, and when a task names a repo that doesn't exist, build outside this public checkout, hand the user the files, and ask them to create the repo.
 ## Open questions for the user
 
 ## Answers from the user
